@@ -1,49 +1,336 @@
-function openSidebar(){
+/* =========================================================
+   PANEL DERECHO Y FICHA DE ESCUELA
+   ========================================================= */
 
-byId("detailsPanel").style.display="flex";
+function initializeSidebar() {
+    const closeButton = firstExistingElement(
+        "closePanel",
+        "closeDetails",
+        "closeSidebar"
+    );
 
+    if (closeButton) {
+        closeButton.addEventListener(
+            "click",
+            closeSchoolDetails
+        );
+    }
+
+    const compareButton = firstExistingElement(
+        "compareSchoolBtn",
+        "addComparisonBtn",
+        "compareBtn"
+    );
+
+    if (compareButton) {
+        compareButton.addEventListener("click", () => {
+            if (SIGPE.selectedSchool) {
+                addSchoolComparison(SIGPE.selectedSchool);
+            }
+        });
+    }
+
+    const csvButton = firstExistingElement(
+        "downloadSchoolCsv",
+        "exportSchoolCsv"
+    );
+
+    if (csvButton) {
+        csvButton.addEventListener("click", () => {
+            if (SIGPE.selectedSchool) {
+                downloadSchoolCSV(SIGPE.selectedSchool);
+            }
+        });
+    }
 }
 
-function closeSidebar(){
 
-byId("detailsPanel").style.display="none";
+function openSidebar() {
+    const panel = byId("detailsPanel");
 
+    if (!panel) return;
+
+    panel.classList.add("open");
+    panel.style.display = "flex";
+
+    setTimeout(() => {
+        SIGPE.map?.invalidateSize();
+    }, 250);
 }
 
-byId("closePanel")
-.addEventListener("click",closeSidebar);
-function selectSchool(escuela){
 
-    SIGPE.selectedSchool=escuela;
+function closeSchoolDetails() {
+    SIGPE.selectedSchool = null;
+
+    const panel = byId("detailsPanel");
+
+    if (panel) {
+        panel.classList.remove("open");
+    }
+
+    destroySchoolChart();
+}
+
+
+function selectSchool(school) {
+    if (!school) return;
+
+    SIGPE.selectedSchool = school;
+
+    renderSchoolInformation(school);
+    renderProjectionTable(school);
+    renderSchoolChart(school);
+    renderSimilarSchools(school);
 
     openSidebar();
+}
 
-    byId("schoolInfo").innerHTML=`
 
-    <h2>${escuela.inmueble}</h2>
+function renderSchoolInformation(school) {
+    const container = byId("schoolInfo");
 
-    <br>
+    if (!container) return;
 
-    <b>CCT:</b> ${escuela.cct}
+    const currentYear = getCurrentYear();
+    const currentValue =
+        Number(school[currentYear.field]) || 0;
 
-    <br><br>
+    const baseValue =
+        Number(school.mat_2024_2025) || 0;
 
-    <b>Nivel:</b>
+    const totalChange = percent(
+        currentValue,
+        baseValue
+    );
 
-    ${escuela.nivel}
+    const annualGrowth = calculateAverageAnnualGrowth(school);
 
-    <br><br>
+    container.innerHTML = `
+        <div class="school-detail-header">
+            <span class="school-detail-icon">🏫</span>
 
-    <b>Alcaldía:</b>
+            <div>
+                <h2>${escapeHTML(school.nombre)}</h2>
 
-    ${escuela.alcaldia}
+                <p>
+                    ${escapeHTML(school.nivel)} ·
+                    ${escapeHTML(school.alcaldia)}
+                </p>
+            </div>
+        </div>
 
-    <br><br>
+        <div class="school-information-grid">
+            <span>CCT</span>
+            <strong>${escapeHTML(school.cct)}</strong>
 
-    <b>Matrícula base:</b>
+            <span>Fuente</span>
+            <strong>
+                ${escapeHTML(
+                    school.fuente || "Estadística 911"
+                )}
+            </strong>
 
-    ${formatNumber(escuela["2025"])}
+            <span>Ciclo mostrado</span>
+            <strong>${currentYear.label}</strong>
 
+            <span>Matrícula base</span>
+            <strong>${formatNumber(baseValue)}</strong>
+
+            <span>Matrícula proyectada</span>
+            <strong>${formatNumber(currentValue)}</strong>
+
+            <span>Cambio acumulado</span>
+            <strong class="${
+                totalChange < 0
+                    ? "negative-value"
+                    : "positive-value"
+            }">
+                ${formatPercentage(totalChange)}
+            </strong>
+
+            <span>Crecimiento anual promedio</span>
+            <strong>
+                ${formatPercentage(annualGrowth)}
+            </strong>
+
+            <span>Clave AGEB</span>
+            <strong>
+                ${escapeHTML(school.cvegeo || "Sin información")}
+            </strong>
+        </div>
     `;
+}
 
+
+function renderProjectionTable(school) {
+    const container = byId("projectionTable");
+
+    if (!container) return;
+
+    const rows = SIGPE.years
+        .map((year, index) => {
+            const value = Number(school[year.field]) || 0;
+
+            const previousValue =
+                index === 0
+                    ? value
+                    : Number(
+                        school[SIGPE.years[index - 1].field]
+                    ) || 0;
+
+            const annualChange =
+                index === 0
+                    ? null
+                    : percent(value, previousValue);
+
+            return `
+                <tr>
+                    <td>${year.label}</td>
+                    <td>${formatNumber(value)}</td>
+                    <td>${formatPercentage(annualChange)}</td>
+                </tr>
+            `;
+        })
+        .join("");
+
+    container.innerHTML = `
+        <table class="projection-table">
+            <thead>
+                <tr>
+                    <th>Ciclo</th>
+                    <th>Matrícula</th>
+                    <th>Cambio anual</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                ${rows}
+            </tbody>
+        </table>
+    `;
+}
+
+
+function renderSimilarSchools(school) {
+    const container = byId("similarSchools");
+
+    if (!container) return;
+
+    const currentField = getCurrentYearField();
+
+    const candidates = SIGPE.data.escuelas
+        .filter(candidate =>
+            candidate.cct !== school.cct &&
+            normalizeString(candidate.nivel) ===
+                normalizeString(school.nivel) &&
+            normalizeString(candidate.alcaldia) ===
+                normalizeString(school.alcaldia)
+        )
+        .map(candidate => ({
+            ...candidate,
+
+            difference: Math.abs(
+                (Number(candidate[currentField]) || 0) -
+                (Number(school[currentField]) || 0)
+            )
+        }))
+        .sort((a, b) => a.difference - b.difference)
+        .slice(0, 5);
+
+    if (candidates.length === 0) {
+        container.innerHTML = `
+            <p class="empty-message">
+                No se encontraron escuelas similares.
+            </p>
+        `;
+
+        return;
+    }
+
+    container.innerHTML = candidates
+        .map(candidate => `
+            <button
+                type="button"
+                class="similar-school-card"
+                onclick="selectSchoolById('${escapeAttribute(
+                    candidate.id || candidate.cct
+                )}')"
+            >
+                <strong>${escapeHTML(candidate.nombre)}</strong>
+
+                <span>${escapeHTML(candidate.cct)}</span>
+
+                <span>
+                    ${formatNumber(candidate[currentField])}
+                    estudiantes
+                </span>
+            </button>
+        `)
+        .join("");
+}
+
+
+function calculateAverageAnnualGrowth(school) {
+    const firstValue =
+        Number(school[SIGPE.years[0].field]) || 0;
+
+    const lastValue =
+        Number(
+            school[
+                SIGPE.years[SIGPE.years.length - 1].field
+            ]
+        ) || 0;
+
+    const periods = SIGPE.years.length - 1;
+
+    if (!firstValue || !lastValue || periods <= 0) {
+        return null;
+    }
+
+    return (
+        (Math.pow(lastValue / firstValue, 1 / periods) - 1) *
+        100
+    );
+}
+
+
+function downloadSchoolCSV(school) {
+    const headers = [
+        "CCT",
+        "Escuela",
+        "Nivel",
+        "Alcaldía",
+        "Ciclo",
+        "Matrícula"
+    ];
+
+    const rows = SIGPE.years.map(year => [
+        school.cct,
+        school.nombre,
+        school.nivel,
+        school.alcaldia,
+        year.label,
+        Number(school[year.field]) || 0
+    ]);
+
+    const csv =
+        "\uFEFF" +
+        [
+            headers,
+            ...rows
+        ]
+            .map(row =>
+                row
+                    .map(value =>
+                        `"${String(value).replaceAll('"', '""')}"`
+                    )
+                    .join(",")
+            )
+            .join("\n");
+
+    downloadTextFile(
+        csv,
+        `proyeccion_${school.cct}.csv`,
+        "text/csv;charset=utf-8"
+    );
 }

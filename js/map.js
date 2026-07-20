@@ -239,9 +239,11 @@ function drawAGEB() {
         }
     );
 
-    SIGPE.layers.ageb.addTo(SIGPE.map);
+    if (byId("chkAGEB")?.checked !== false) {
+        SIGPE.layers.ageb.addTo(SIGPE.map);
+    }
 
-    if (features.length > 0) {
+    if (!SIGPE.initialBoundsApplied && features.length > 0) {
         const bounds = SIGPE.layers.ageb.getBounds();
 
         if (bounds.isValid()) {
@@ -249,6 +251,7 @@ function drawAGEB() {
                 padding: [20, 20],
                 maxZoom: 13
             });
+            SIGPE.initialBoundsApplied = true;
         }
     }
 }
@@ -270,10 +273,7 @@ function getFilteredAGEB() {
 
         const matchesAlcaldia =
             SIGPE.currentAlcaldia === "Todos" ||
-            municipality === SIGPE.currentAlcaldia ||
-            schools.some(
-                school => school.alcaldia === SIGPE.currentAlcaldia
-            );
+            municipality === SIGPE.currentAlcaldia;
 
         const matchesLevel =
             SIGPE.currentLevel === "Todos" ||
@@ -422,7 +422,9 @@ function showAGEBInformation(feature) {
         baseEnrollment
     );
 
-    const schoolsHTML = schools
+    const showSchools = byId("chkEscuelas")?.checked !== false;
+
+    const schoolsHTML = showSchools ? schools
         .sort(
             (a, b) =>
                 numberValue(b[currentField]) -
@@ -457,7 +459,7 @@ function showAGEBInformation(feature) {
                 </button>
             `;
         })
-        .join("");
+        .join("") : "";
 
     byId("schoolInfo").innerHTML = `
         <section class="ageb-summary">
@@ -485,8 +487,10 @@ function showAGEBInformation(feature) {
             <h3>Escuelas en el AGEB</h3>
 
             ${
-                schoolsHTML ||
-                "<p>No hay escuelas que coincidan con los filtros.</p>"
+                !showSchools
+                    ? "<p>La lista de escuelas está desactivada en el control de capas.</p>"
+                    : schoolsHTML ||
+                      "<p>No hay escuelas que coincidan con los filtros.</p>"
             }
         </section>
     `;

@@ -14,50 +14,76 @@ const SIGPE = {
         alcaldias: null
     },
 
-    years: Array.from({ length: 12 }, (_, index) => {
-        const year = 2024 + index;
+    years: Array.from(
+        { length: 12 },
+        (_, index) => {
+            const year = 2024 + index;
 
-        return {
-            year,
-            label: `${year}-${year + 1}`,
-            field: `mat_${year}_${year + 1}`
-        };
-    }),
+            return {
+                year,
+                label: `${year}-${year + 1}`,
+                field: `mat_${year}_${year + 1}`
+            };
+        }
+    ),
 
     currentYearIndex: 0,
     currentLevel: "Todos",
     currentAlcaldia: "Todos",
+
     selectedSchool: null,
-    comparison: []
+    comparison: [],
+    initialBoundsApplied: false
 };
 
-window.addEventListener("DOMContentLoaded", async () => {
-    try {
-        console.log("Iniciando SIGPE-CDMX v3.0");
 
-        initializeMap();
-        await loadData();
+window.addEventListener(
+    "DOMContentLoaded",
+    async () => {
+        try {
+            initializeMap();
 
-        populateYearSelector();
-        enrichAlcaldias();
+            await loadData();
 
-        drawAlcaldias();
-        drawAGEB();
+            populateYearSelector();
+            enrichAlcaldias();
 
-        initializeFilters();
-        initializeSearch();
-        initializeLayerControls();
-        initializeFullscreen();
+            drawAlcaldias();
+            drawAGEB();
 
-        refreshMap();
+            initializeFilters();
+            initializeSearch();
+            initializeSidebar();
+            initializeComparison();
+            initializeLayerControls();
+            initializeFullscreen();
 
-        console.log("SIGPE-CDMX cargado correctamente");
-    } catch (error) {
-        console.error("Error al iniciar SIGPE-CDMX:", error);
+            refreshMap();
 
-        alert(
-            "No se pudieron cargar los datos. " +
-            "Revisa los nombres de los archivos dentro de la carpeta data."
-        );
+            console.log(
+                "SIGPE-CDMX v3.0 cargado correctamente",
+                {
+                    ageb:
+                        SIGPE.data.ageb.features.length,
+
+                    alcaldias:
+                        SIGPE.data.alcaldias.features.length,
+
+                    escuelas:
+                        SIGPE.data.escuelas.length
+                }
+            );
+        } catch (error) {
+            console.error(
+                "No se pudo iniciar SIGPE-CDMX:",
+                error
+            );
+
+            alert(
+                "No se pudieron cargar los datos. " +
+                "Abre la consola con F12 para ver " +
+                "qué archivo está fallando."
+            );
+        }
     }
-});
+);

@@ -1,398 +1,309 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sistema de Información Geográfica de Proyecciones Educativas de la Ciudad de México.">
+    <title>SIGPE-CDMX | Proyecciones educativas</title>
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-
-<title>SIGPE-CDMX | Sistema de Información Geográfica de Proyecciones Educativas</title>
-
-<link rel="stylesheet"
-href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-
-<link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-
-<link rel="stylesheet" href="styles.css">
-
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQ3ynhC6sNAqH0QpXAvMeqjLkPq5m8M=" crossorigin="">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
 </head>
-
 <body>
 
-<header class="topbar">
-
-<div class="logo">
-
-<h1>SIGPE-CDMX</h1>
-
-<span>Sistema de Información Geográfica de Proyecciones Educativas</span>
-
-</div>
-
-<div class="top-actions">
-
-<input
-type="text"
-id="searchInput"
-placeholder="Buscar escuela o CCT...">
-
-<button id="fullscreenBtn">
-
-<i class="fa-solid fa-expand"></i>
-
-</button>
-
-</div>
-
-</header>
-
-
-
-<div class="container">
-
-<!-- PANEL IZQUIERDO -->
-
-<aside class="sidebar">
-
-<section class="card">
-
-<h3>
-
-<i class="fa-solid fa-layer-group"></i>
-
-Capas
-
-</h3>
-
-<label>
-
-<input type="checkbox" checked id="chkAGEB">
-
-AGEB
-
-</label>
-
-<label>
-
-<input type="checkbox" checked id="chkAlcaldias">
-
-Alcaldías
-
-</label>
-
-<label>
-
-<input type="checkbox" checked id="chkEscuelas">
-
-Escuelas
-
-</label>
-
-</section>
-
-
-
-<section class="card">
-
-<h3>
-
-<i class="fa-solid fa-filter"></i>
-
-Filtros
-
-</h3>
-
-
-
-<label>
-
-Alcaldía
-
-</label>
-
-<select id="filterAlcaldia">
-
-<option value="Todos">
-
-Todas
-
-</option>
-
-</select>
-
-
-
-<label>
-
-Nivel educativo
-
-</label>
-
-<select id="filterNivel">
-
-<option value="Todos">
-
-Todos
-
-</option>
-
-<option>
-
-Inicial
-
-</option>
-
-<option>
-
-Especial
-
-</option>
-
-<option>
-
-Preescolar
-
-</option>
-
-<option>
-
-Primaria
-
-</option>
-
-<option>
-
-Secundaria
-
-</option>
-
-<option>
-
-Adultos
-
-</option>
-
-</select>
-
-
-
-<label>
-
-Año
-
-</label>
-
-<select id="yearSelect">
-
-</select>
-
-</section>
-
-
-
-<section class="card">
-
-<h3>
-
-<i class="fa-solid fa-chart-column"></i>
-
-Resumen
-
-</h3>
-
-<div class="stat">
-
-<span>Matrícula</span>
-
-<strong id="totalMatricula">
-
-—
-
-</strong>
-
-</div>
-
-<div class="stat">
-
-<span>Escuelas</span>
-
-<strong id="totalEscuelas">
-
-—
-
-</strong>
-
-</div>
-
-<div class="stat">
-
-<span>AGEB</span>
-
-<strong id="totalAGEB">
-
-—
-
-</strong>
-
-</div>
-
-<div class="stat">
-
-<span>Variación</span>
-
-<strong id="variacionTotal">
-
-—
-
-</strong>
-
-</div>
-
-</section>
-
-
-
-<section class="card">
-
-<h3>
-
-<i class="fa-solid fa-download"></i>
-
-Descargas
-
-</h3>
-
-<button id="btnCSV">
-
-CSV
-
-</button>
-
-<button id="btnPDF">
-
-PDF
-
-</button>
-
-</section>
-
-</aside>
-
-
-
-<!-- MAPA -->
-
-<main>
-
-<div id="map"></div>
-
-</main>
-
-
-
-<!-- PANEL DERECHO -->
-
-<aside class="detailsPanel" id="detailsPanel">
-
-<div class="panelHeader">
-
-<h2>
-
-Escuela
-
-</h2>
-
-<button id="closePanel">
-
-×
-
-</button>
-
-</div>
-
-
-
-<div id="schoolInfo">
-
-Selecciona una escuela.
-
-</div>
-
-
-
-<div class="chartContainer">
-
-<canvas id="chartMatricula">
-
-</canvas>
-
-</div>
-
-
-
-<div id="projectionTable">
-
-</div>
-
-
-
-<div class="comparisonBox">
-
-<h3>
-
-Escuelas similares
-
-</h3>
-
-<div id="similarSchools">
-
-</div>
-
-</div>
-
-
-
-<button id="compareBtn">
-
-Agregar al modo comparación
-
-</button>
-
-</aside>
-
-</div>
-
-
-
-<footer>
-
-SIGPE-CDMX · AEFCM · Estadística 911
-
-</footer>
-
-
-
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<script src="js/utils.js"></script>
-
-<script src="js/charts.js"></script>
-
-<script src="js/sidebar.js"></script>
-
-<script src="js/search.js"></script>
-
-<script src="js/filters.js"></script>
-
-<script src="js/comparison.js"></script>
-
-<script src="js/map.js"></script>
-
-<script src="js/app.js"></script>
-
+    <header class="topbar">
+        <div class="brand">
+            <div class="brand-icon" aria-hidden="true">
+                <i class="fa-solid fa-school"></i>
+            </div>
+            <div class="brand-text">
+                <h1>SIGPE-CDMX</h1>
+                <p>Sistema de Información Geográfica de Proyecciones Educativas</p>
+            </div>
+        </div>
+
+        <div class="topbar-actions">
+            <div class="search-box">
+                <label class="sr-only" for="searchInput">Buscar escuela por nombre, CCT o alcaldía</label>
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                <input id="searchInput" type="search" placeholder="Buscar escuela, CCT o alcaldía..." autocomplete="off" spellcheck="false">
+                <div id="searchResults" class="search-results" role="listbox" aria-label="Resultados de búsqueda"></div>
+            </div>
+
+            <button id="fullscreenBtn" class="topbar-button" type="button" title="Pantalla completa" aria-label="Activar pantalla completa">
+                <i class="fa-solid fa-expand" aria-hidden="true"></i>
+                <span>Pantalla completa</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="app-layout">
+        <aside id="filtersPanel" class="left-panel" aria-label="Filtros y estadísticas">
+            <div class="panel-heading">
+                <div>
+                    <span class="panel-kicker">Estadística Oficial 911</span>
+                    <h2>Filtros del visor</h2>
+                </div>
+
+                <button id="clearFilters" class="secondary-button compact-button" type="button">
+                    <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
+                    Limpiar
+                </button>
+            </div>
+
+            <section class="panel-section">
+                <div class="section-title">
+                    <i class="fa-regular fa-calendar" aria-hidden="true"></i>
+                    <h3>Ciclo escolar</h3>
+                </div>
+
+                <div class="form-group">
+                    <label for="yearSelect">Seleccionar ciclo</label>
+                    <select id="yearSelect"></select>
+                </div>
+
+                <div class="form-group">
+                    <div class="range-label-row">
+                        <label for="yearSlider">Desplazamiento temporal</label>
+                        <strong id="currentCycle">2024-2025</strong>
+                    </div>
+
+                    <input id="yearSlider" type="range" min="0" max="11" step="1" value="0">
+
+                    <div class="range-extremes">
+                        <span>2024-2025</span>
+                        <span>2035-2036</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel-section">
+                <div class="section-title">
+                    <i class="fa-solid fa-filter" aria-hidden="true"></i>
+                    <h3>Filtros territoriales</h3>
+                </div>
+
+                <div class="form-group">
+                    <label for="levelFilter">Nivel educativo</label>
+                    <select id="levelFilter">
+                        <option value="Todos">Todos los niveles</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="alcaldiaFilter">Alcaldía</label>
+                    <select id="alcaldiaFilter">
+                        <option value="Todos">Todas las alcaldías</option>
+                    </select>
+                </div>
+            </section>
+
+            <section class="panel-section">
+                <div class="section-title">
+                    <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
+                    <h3>Capas del mapa</h3>
+                </div>
+
+                <div class="layer-list">
+                    <label class="layer-option">
+                        <input id="chkAGEB" type="checkbox" checked>
+                        <span class="layer-option-text">
+                            <strong>AGEB</strong>
+                            <small>Matrícula proyectada por área</small>
+                        </span>
+                    </label>
+
+                    <label class="layer-option">
+                        <input id="chkAlcaldias" type="checkbox" checked>
+                        <span class="layer-option-text">
+                            <strong>Alcaldías</strong>
+                            <small>Límites administrativos</small>
+                        </span>
+                    </label>
+
+                    <label class="layer-option">
+                        <input id="chkEscuelas" type="checkbox" checked>
+                        <span class="layer-option-text">
+                            <strong>Escuelas</strong>
+                            <small>Listado asociado a cada AGEB</small>
+                        </span>
+                    </label>
+                </div>
+            </section>
+
+            <section class="panel-section">
+                <div class="section-title">
+                    <i class="fa-solid fa-chart-column" aria-hidden="true"></i>
+                    <h3>Resumen</h3>
+                </div>
+
+                <div class="stats-grid">
+                    <article class="stat-card">
+                        <span class="stat-label">Escuelas</span>
+                        <strong id="totalEscuelas">—</strong>
+                    </article>
+
+                    <article class="stat-card">
+                        <span class="stat-label">Matrícula mostrada</span>
+                        <strong id="totalMatricula">—</strong>
+                    </article>
+
+                    <article class="stat-card">
+                        <span class="stat-label">AGEB con matrícula</span>
+                        <strong id="totalAGEB">—</strong>
+                    </article>
+
+                    <article class="stat-card">
+                        <span class="stat-label">Cambio acumulado</span>
+                        <strong id="cambioTotal">—</strong>
+                    </article>
+                </div>
+            </section>
+
+            <section class="panel-section">
+                <div class="section-title">
+                    <i class="fa-solid fa-palette" aria-hidden="true"></i>
+                    <h3>Leyenda</h3>
+                </div>
+
+                <div id="legend" class="legend">
+                    <p class="empty-message">La leyenda aparecerá al cargar los datos.</p>
+                </div>
+            </section>
+
+            <section class="panel-section">
+                <div class="section-title">
+                    <i class="fa-solid fa-download" aria-hidden="true"></i>
+                    <h3>Descargas</h3>
+                </div>
+
+                <div class="download-list">
+                    <a class="download-link" href="data/base_matriculas_911_proyectadas.csv" download>
+                        <i class="fa-solid fa-file-csv" aria-hidden="true"></i>
+                        Matrícula 911 y proyecciones
+                    </a>
+
+                    <a class="download-link" href="data/conapo_00_14.csv" download>
+                        <i class="fa-solid fa-file-csv" aria-hidden="true"></i>
+                        Población CONAPO 0–14
+                    </a>
+
+                    <a class="download-link" href="data/analisis_alcaldias.csv" download>
+                        <i class="fa-solid fa-file-csv" aria-hidden="true"></i>
+                        Análisis por alcaldía
+                    </a>
+                </div>
+            </section>
+
+            <p class="method-note">
+                Las proyecciones son estimaciones técnicas. La matrícula base corresponde a la Estadística Oficial 911.
+            </p>
+        </aside>
+
+        <section class="map-area" aria-label="Mapa de proyecciones educativas">
+            <div id="map"></div>
+
+            <div class="map-status">
+                <span>
+                    <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+                    Selecciona un AGEB para consultar sus escuelas.
+                </span>
+            </div>
+        </section>
+
+        <aside id="detailsPanel" class="details-panel" aria-label="Detalle de escuela">
+            <div class="details-header">
+                <div>
+                    <span class="panel-kicker">Detalle</span>
+                    <h2>Información de la escuela</h2>
+                </div>
+
+                <button id="closePanel" class="icon-button" type="button" aria-label="Cerrar panel" title="Cerrar">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+            </div>
+
+            <div class="details-scroll">
+                <section class="detail-section">
+                    <div id="schoolInfo">
+                        <div class="empty-state">
+                            <i class="fa-solid fa-school-circle-check" aria-hidden="true"></i>
+                            <h3>Selecciona una escuela</h3>
+                            <p>Haz clic en un AGEB o utiliza el buscador para consultar la proyección completa.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="detail-section">
+                    <div class="detail-section-heading">
+                        <div>
+                            <span class="section-eyebrow">Evolución temporal</span>
+                            <h3>Proyección de matrícula</h3>
+                        </div>
+                    </div>
+
+                    <div class="chart-wrapper">
+                        <canvas id="chartMatricula"></canvas>
+                    </div>
+                </section>
+
+                <section class="detail-section">
+                    <div class="detail-section-heading">
+                        <div>
+                            <span class="section-eyebrow">Ciclos escolares</span>
+                            <h3>Tabla de proyección</h3>
+                        </div>
+                    </div>
+
+                    <div id="projectionTable" class="table-wrapper">
+                        <p class="empty-message">Selecciona una escuela para ver la tabla.</p>
+                    </div>
+                </section>
+
+                <section class="detail-section">
+                    <div class="detail-section-heading">
+                        <div>
+                            <span class="section-eyebrow">Referencia</span>
+                            <h3>Escuelas similares</h3>
+                        </div>
+                    </div>
+
+                    <div id="similarSchools">
+                        <p class="empty-message">Selecciona una escuela para consultar planteles similares.</p>
+                    </div>
+                </section>
+
+                <section class="detail-section detail-actions">
+                    <button id="compareSchoolBtn" class="primary-button" type="button">
+                        <i class="fa-solid fa-code-compare" aria-hidden="true"></i>
+                        Agregar a comparación
+                    </button>
+
+                    <button id="downloadSchoolCsv" class="secondary-button" type="button">
+                        <i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i>
+                        Descargar CSV
+                    </button>
+                </section>
+            </div>
+        </aside>
+    </main>
+
+    <footer class="footer">
+        <span>SIGPE-CDMX · Matrícula base: Estadística Oficial 911</span>
+        <span>Proyecciones 2024-2025 a 2035-2036</span>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script src="js/utils.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script src="js/search.js"></script>
+    <script src="js/filters.js"></script>
+    <script src="js/comparison.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/app.js"></script>
 </body>
-
 </html>
