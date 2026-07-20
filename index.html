@@ -1,553 +1,398 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
-  <meta charset="utf-8">
-  <title>Visor de mantenimiento escolar - Iztapalapa</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 
-  <style>
-    html, body, #map {
-      height: 100%;
-      width: 100%;
-      margin: 0;
-      font-family: Arial, sans-serif;
-    }
+<title>SIGPE-CDMX | Sistema de Información Geográfica de Proyecciones Educativas</title>
 
-    .panel {
-      position: absolute;
-      top: 12px;
-      left: 12px;
-      z-index: 1000;
-      background: white;
-      padding: 12px;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,.35);
-      width: 310px;
-      max-height: 92vh;
-      overflow-y: auto;
-      font-size: 14px;
-    }
+<link rel="stylesheet"
+href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
-    .panel h2 {
-      margin: 0 0 8px 0;
-      font-size: 17px;
-    }
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 
-    .panel input[type="text"],
-    .panel select {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 7px;
-      margin: 5px 0 10px 0;
-      border: 1px solid #aaa;
-      border-radius: 4px;
-    }
+<link rel="stylesheet" href="styles.css">
 
-    .panel label {
-      display: block;
-      margin: 4px 0;
-    }
-
-    .panel input[type="checkbox"] {
-      margin-right: 5px;
-    }
-
-    .small {
-      font-size: 12px;
-      color: #555;
-    }
-
-    hr {
-      border: none;
-      border-top: 1px solid #ddd;
-      margin: 10px 0;
-    }
-
-    .legend {
-      position: absolute;
-      right: 12px;
-      bottom: 25px;
-      z-index: 1000;
-      background: white;
-      padding: 10px;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,.35);
-      font-size: 13px;
-      line-height: 19px;
-    }
-
-    .dot {
-      display: inline-block;
-      width: 13px;
-      height: 13px;
-      border-radius: 50%;
-      border: 1px solid #111;
-      margin-right: 6px;
-      vertical-align: middle;
-    }
-
-    .popup-title {
-      font-weight: bold;
-      font-size: 15px;
-      margin-bottom: 4px;
-    }
-
-    .btn {
-      width: 100%;
-      padding: 7px;
-      border: 1px solid #999;
-      border-radius: 5px;
-      background: #f5f5f5;
-      cursor: pointer;
-      margin-top: 5px;
-    }
-
-    .btn:hover {
-      background: #e6e6e6;
-    }
-  </style>
 </head>
 
 <body>
 
+<header class="topbar">
+
+<div class="logo">
+
+<h1>SIGPE-CDMX</h1>
+
+<span>Sistema de Información Geográfica de Proyecciones Educativas</span>
+
+</div>
+
+<div class="top-actions">
+
+<input
+type="text"
+id="searchInput"
+placeholder="Buscar escuela o CCT...">
+
+<button id="fullscreenBtn">
+
+<i class="fa-solid fa-expand"></i>
+
+</button>
+
+</div>
+
+</header>
+
+
+
+<div class="container">
+
+<!-- PANEL IZQUIERDO -->
+
+<aside class="sidebar">
+
+<section class="card">
+
+<h3>
+
+<i class="fa-solid fa-layer-group"></i>
+
+Capas
+
+</h3>
+
+<label>
+
+<input type="checkbox" checked id="chkAGEB">
+
+AGEB
+
+</label>
+
+<label>
+
+<input type="checkbox" checked id="chkAlcaldias">
+
+Alcaldías
+
+</label>
+
+<label>
+
+<input type="checkbox" checked id="chkEscuelas">
+
+Escuelas
+
+</label>
+
+</section>
+
+
+
+<section class="card">
+
+<h3>
+
+<i class="fa-solid fa-filter"></i>
+
+Filtros
+
+</h3>
+
+
+
+<label>
+
+Alcaldía
+
+</label>
+
+<select id="filterAlcaldia">
+
+<option value="Todos">
+
+Todas
+
+</option>
+
+</select>
+
+
+
+<label>
+
+Nivel educativo
+
+</label>
+
+<select id="filterNivel">
+
+<option value="Todos">
+
+Todos
+
+</option>
+
+<option>
+
+Inicial
+
+</option>
+
+<option>
+
+Especial
+
+</option>
+
+<option>
+
+Preescolar
+
+</option>
+
+<option>
+
+Primaria
+
+</option>
+
+<option>
+
+Secundaria
+
+</option>
+
+<option>
+
+Adultos
+
+</option>
+
+</select>
+
+
+
+<label>
+
+Año
+
+</label>
+
+<select id="yearSelect">
+
+</select>
+
+</section>
+
+
+
+<section class="card">
+
+<h3>
+
+<i class="fa-solid fa-chart-column"></i>
+
+Resumen
+
+</h3>
+
+<div class="stat">
+
+<span>Matrícula</span>
+
+<strong id="totalMatricula">
+
+—
+
+</strong>
+
+</div>
+
+<div class="stat">
+
+<span>Escuelas</span>
+
+<strong id="totalEscuelas">
+
+—
+
+</strong>
+
+</div>
+
+<div class="stat">
+
+<span>AGEB</span>
+
+<strong id="totalAGEB">
+
+—
+
+</strong>
+
+</div>
+
+<div class="stat">
+
+<span>Variación</span>
+
+<strong id="variacionTotal">
+
+—
+
+</strong>
+
+</div>
+
+</section>
+
+
+
+<section class="card">
+
+<h3>
+
+<i class="fa-solid fa-download"></i>
+
+Descargas
+
+</h3>
+
+<button id="btnCSV">
+
+CSV
+
+</button>
+
+<button id="btnPDF">
+
+PDF
+
+</button>
+
+</section>
+
+</aside>
+
+
+
+<!-- MAPA -->
+
+<main>
+
 <div id="map"></div>
 
-<div class="panel">
-  <h2>Escuelas Iztapalapa</h2>
+</main>
 
-  <input type="text" id="searchBox" placeholder="Buscar por escuela o CCT">
 
-  <label><b>Nivel de prioridad</b></label>
-  <select id="priorityFilter">
-    <option value="todas">Todas</option>
-    <option value="muy_baja">Muy baja</option>
-    <option value="baja">Baja</option>
-    <option value="media">Media</option>
-    <option value="alta">Alta</option>
-    <option value="muy_alta">Muy alta</option>
-  </select>
 
-  <button class="btn" id="resetBtn">Limpiar filtros</button>
+<!-- PANEL DERECHO -->
 
-  <hr>
+<aside class="detailsPanel" id="detailsPanel">
 
-  <b>Capas principales</b>
-  <label><input type="checkbox" id="chkPriority" checked> Nivel de prioridad</label>
-  <label><input type="checkbox" id="chkAgeb" checked> AGEB</label>
-  <label><input type="checkbox" id="chkBoundary" checked> Límite Iztapalapa</label>
+<div class="panelHeader">
 
-  <hr>
+<h2>
 
-  <b>Capas por necesidad</b>
-  <div class="small">Se muestran solo escuelas con valor “Si”.</div>
+Escuela
 
-  <label><input type="checkbox" class="needChk" value="Impermeabi"> Impermeabilización</label>
-  <label><input type="checkbox" class="needChk" value="Aplicacion"> Pintura interior</label>
-  <label><input type="checkbox" class="needChk" value="Aplicaci_1"> Pintura exterior</label>
-  <label><input type="checkbox" class="needChk" value="Colocacion"> Loseta</label>
-  <label><input type="checkbox" class="needChk" value="Sustitucio"> Sustitución de vidrios</label>
-  <label><input type="checkbox" class="needChk" value="Rehabilita"> Cancelería aluminio</label>
-  <label><input type="checkbox" class="needChk" value="Sustituc_1"> Herrería por aluminio</label>
-  <label><input type="checkbox" class="needChk" value="Sustituc_2"> Puertas</label>
-  <label><input type="checkbox" class="needChk" value="Sustituc_3"> Barandales</label>
-  <label><input type="checkbox" class="needChk" value="Rehabili_2"> Muros / techos</label>
-  <label><input type="checkbox" class="needChk" value="Desazolve"> Desazolve</label>
-  <label><input type="checkbox" class="needChk" value="Balizamien"> Balizamiento</label>
-  <label><input type="checkbox" class="needChk" value="Poda_de_ar"> Poda de árboles</label>
-  <label><input type="checkbox" class="needChk" value="Retiro_de_"> Retiro de árboles</label>
-  <label><input type="checkbox" class="needChk" value="Valoracion"> Valoración de árboles</label>
+</h2>
 
-  <hr>
-  <div class="small">
-    Archivo de escuelas: <b>escuelas.json</b><br>
-    Archivos opcionales: <b>ageb.json</b>, <b>iztapalapa.json</b>
-  </div>
+<button id="closePanel">
+
+×
+
+</button>
+
 </div>
 
-<div class="legend">
-  <b>Nivel de prioridad</b><br>
-  <span class="dot" style="background:#1a9850"></span>Muy baja<br>
-  <span class="dot" style="background:#91cf60"></span>Baja<br>
-  <span class="dot" style="background:#ffffbf"></span>Media<br>
-  <span class="dot" style="background:#fc8d59"></span>Alta<br>
-  <span class="dot" style="background:#d73027"></span>Muy alta
+
+
+<div id="schoolInfo">
+
+Selecciona una escuela.
+
 </div>
+
+
+
+<div class="chartContainer">
+
+<canvas id="chartMatricula">
+
+</canvas>
+
+</div>
+
+
+
+<div id="projectionTable">
+
+</div>
+
+
+
+<div class="comparisonBox">
+
+<h3>
+
+Escuelas similares
+
+</h3>
+
+<div id="similarSchools">
+
+</div>
+
+</div>
+
+
+
+<button id="compareBtn">
+
+Agregar al modo comparación
+
+</button>
+
+</aside>
+
+</div>
+
+
+
+<footer>
+
+SIGPE-CDMX · AEFCM · Estadística 911
+
+</footer>
+
+
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-<script>
-/* =========================
-   MAPA BASE
-========================= */
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-const map = L.map("map", {
-  zoomControl: true
-}).setView([19.35, -99.05], 12);
+<script src="js/utils.js"></script>
 
-const osm = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  maxZoom: 20,
-  attribution: "OpenStreetMap"
-}).addTo(map);
+<script src="js/charts.js"></script>
 
-const claro = L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-  maxZoom: 20,
-  attribution: "OpenStreetMap | CARTO"
-});
+<script src="js/sidebar.js"></script>
 
-const satelite = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
-  maxZoom: 20,
-  attribution: "Esri"
-});
+<script src="js/search.js"></script>
 
-L.control.layers({
-  "OpenStreetMap": osm,
-  "Mapa claro": claro,
-  "Satélite": satelite
-}, {}, {collapsed: true}).addTo(map);
+<script src="js/filters.js"></script>
 
+<script src="js/comparison.js"></script>
 
-/* =========================
-   VARIABLES
-========================= */
+<script src="js/map.js"></script>
 
-let escuelasData = null;
-let priorityLayer = null;
-let agebLayer = null;
-let boundaryLayer = null;
-let needLayers = {};
-
-const needNames = {
-  "Impermeabi": "Impermeabilización",
-  "Aplicacion": "Pintura interior",
-  "Aplicaci_1": "Pintura exterior",
-  "Colocacion": "Loseta",
-  "Sustitucio": "Sustitución de vidrios",
-  "Rehabilita": "Cancelería aluminio",
-  "Sustituc_1": "Herrería por aluminio",
-  "Sustituc_2": "Puertas",
-  "Sustituc_3": "Barandales",
-  "Rehabili_2": "Muros / techos",
-  "Desazolve": "Desazolve",
-  "Balizamien": "Balizamiento",
-  "Poda_de_ar": "Poda de árboles",
-  "Retiro_de_": "Retiro de árboles",
-  "Valoracion": "Valoración de árboles"
-};
-
-const needColors = {
-  "Impermeabi": "#0077ff",
-  "Aplicacion": "#8e44ad",
-  "Aplicaci_1": "#9b59b6",
-  "Colocacion": "#795548",
-  "Sustitucio": "#00a8cc",
-  "Rehabilita": "#34495e",
-  "Sustituc_1": "#2c3e50",
-  "Sustituc_2": "#e67e22",
-  "Sustituc_3": "#d35400",
-  "Rehabili_2": "#c0392b",
-  "Desazolve": "#16a085",
-  "Balizamien": "#f1c40f",
-  "Poda_de_ar": "#27ae60",
-  "Retiro_de_": "#145a32",
-  "Valoracion": "#6ab04c"
-};
-
-
-/* =========================
-   FUNCIONES
-========================= */
-
-function cleanText(value) {
-  return String(value ?? "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim();
-}
-
-function isYes(value) {
-  return cleanText(value) === "si";
-}
-
-function getTotal(p) {
-  return Number(p.Total_Nec ?? 0);
-}
-
-function getPriority(total) {
-  total = Number(total);
-  if (total >= 22) return "muy_alta";
-  if (total >= 16) return "alta";
-  if (total >= 10) return "media";
-  if (total >= 5) return "baja";
-  return "muy_baja";
-}
-
-function priorityText(total) {
-  const p = getPriority(total);
-  if (p === "muy_alta") return "Muy alta";
-  if (p === "alta") return "Alta";
-  if (p === "media") return "Media";
-  if (p === "baja") return "Baja";
-  return "Muy baja";
-}
-
-function priorityColor(total) {
-  total = Number(total);
-  if (total >= 22) return "#d73027";
-  if (total >= 16) return "#fc8d59";
-  if (total >= 10) return "#ffffbf";
-  if (total >= 5) return "#91cf60";
-  return "#1a9850";
-}
-
-function priorityRadius(total) {
-  total = Number(total);
-  if (total >= 22) return 12;
-  if (total >= 16) return 10;
-  if (total >= 10) return 8;
-  if (total >= 5) return 6;
-  return 4;
-}
-
-function schoolName(p) {
-  return p.Nombre || p.NOMBRE || p.nombre || p.NOM_ESC || p.NOM_CCT || "Escuela sin nombre";
-}
-
-function schoolCct(p) {
-  return p.CCT || p.CCT_1 || p.CCT1 || p.Clave || p.CLAVECCT || "";
-}
-
-function popupGeneral(p) {
-  let necesidades = "";
-  Object.keys(needNames).forEach(field => {
-    necesidades += `<b>${needNames[field]}:</b> ${p[field] || "Sin dato"}<br>`;
-  });
-
-  return `
-    <div class="popup-title">${schoolName(p)}</div>
-    <b>CCT:</b> ${schoolCct(p)}<br>
-    <b>Alcaldía:</b> ${p.Alcaldia || "Sin dato"}<br>
-    <b>Nivel:</b> ${p.Nivel_prin || "Sin dato"}<br>
-    <b>Total necesidades:</b> ${getTotal(p)}<br>
-    <b>Prioridad:</b> ${priorityText(getTotal(p))}<br>
-    <hr>
-    ${necesidades}
-  `;
-}
-
-function popupNeed(p, field) {
-  return `
-    <div class="popup-title">${schoolName(p)}</div>
-    <b>CCT:</b> ${schoolCct(p)}<br>
-    <b>${needNames[field]}:</b> ${p[field] || "Sin dato"}<br>
-    <b>Total necesidades:</b> ${getTotal(p)}<br>
-    <b>Prioridad:</b> ${priorityText(getTotal(p))}
-  `;
-}
-
-function passMainFilters(feature) {
-  const p = feature.properties || {};
-  const selectedPriority = document.getElementById("priorityFilter").value;
-  const query = cleanText(document.getElementById("searchBox").value);
-
-  if (selectedPriority !== "todas" && getPriority(getTotal(p)) !== selectedPriority) {
-    return false;
-  }
-
-  if (query) {
-    const text = cleanText(`${schoolName(p)} ${schoolCct(p)}`);
-    if (!text.includes(query)) return false;
-  }
-
-  return true;
-}
-
-
-/* =========================
-   DIBUJAR CAPA DE PRIORIDAD
-========================= */
-
-function drawPriorityLayer() {
-  if (priorityLayer) {
-    map.removeLayer(priorityLayer);
-  }
-
-  priorityLayer = L.geoJSON(escuelasData, {
-    filter: passMainFilters,
-    pointToLayer: function(feature, latlng) {
-      const total = getTotal(feature.properties);
-
-      return L.circleMarker(latlng, {
-        radius: priorityRadius(total),
-        fillColor: priorityColor(total),
-        color: "#111",
-        weight: 1,
-        opacity: 1,
-        fillOpacity: 0.9
-      });
-    },
-    onEachFeature: function(feature, layer) {
-      const p = feature.properties || {};
-      layer.bindPopup(popupGeneral(p));
-    }
-  });
-
-  if (document.getElementById("chkPriority").checked) {
-    priorityLayer.addTo(map);
-  }
-}
-
-
-/* =========================
-   DIBUJAR CAPAS POR NECESIDAD
-========================= */
-
-function createNeedLayers() {
-  Object.keys(needNames).forEach(field => {
-    needLayers[field] = L.geoJSON(escuelasData, {
-      filter: function(feature) {
-        return isYes((feature.properties || {})[field]);
-      },
-      pointToLayer: function(feature, latlng) {
-        return L.circleMarker(latlng, {
-          radius: 7,
-          fillColor: needColors[field] || "#0077ff",
-          color: "#000",
-          weight: 1,
-          opacity: 1,
-          fillOpacity: 0.9
-        });
-      },
-      onEachFeature: function(feature, layer) {
-        layer.bindPopup(popupNeed(feature.properties || {}, field));
-      }
-    });
-  });
-}
-
-function updateNeedLayers() {
-  document.querySelectorAll(".needChk").forEach(chk => {
-    const field = chk.value;
-    const layer = needLayers[field];
-
-    if (!layer) return;
-
-    if (chk.checked) {
-      if (!map.hasLayer(layer)) {
-        layer.addTo(map);
-      }
-    } else {
-      if (map.hasLayer(layer)) {
-        map.removeLayer(layer);
-      }
-    }
-  });
-}
-
-
-/* =========================
-   CARGA DE ARCHIVOS
-========================= */
-
-function loadOptionalGeoJSON(fileName, options, onLoaded) {
-  fetch(fileName)
-    .then(response => {
-      if (!response.ok) throw new Error(fileName + " no encontrado");
-      return response.json();
-    })
-    .then(data => onLoaded(L.geoJSON(data, options).addTo(map)))
-    .catch(err => console.warn(err.message));
-}
-
-loadOptionalGeoJSON("iztapalapa.json", {
-  style: {
-    color: "red",
-    weight: 2,
-    fillColor: "transparent",
-    fillOpacity: 0
-  }
-}, layer => {
-  boundaryLayer = layer;
-  if (!document.getElementById("chkBoundary").checked) {
-    map.removeLayer(boundaryLayer);
-  }
-});
-
-loadOptionalGeoJSON("ageb.json", {
-  style: {
-    color: "#444",
-    weight: 0.6,
-    fillColor: "transparent",
-    fillOpacity: 0
-  }
-}, layer => {
-  agebLayer = layer;
-  if (!document.getElementById("chkAgeb").checked) {
-    map.removeLayer(agebLayer);
-  }
-});
-
-fetch("escuelas.json")
-  .then(response => response.json())
-  .then(data => {
-    escuelasData = data;
-
-    drawPriorityLayer();
-    createNeedLayers();
-
-    if (priorityLayer && priorityLayer.getBounds().isValid()) {
-      map.fitBounds(priorityLayer.getBounds(), {padding: [20,20]});
-    }
-
-    console.log("Escuelas cargadas:", escuelasData.features.length);
-  })
-  .catch(err => {
-    alert("No se pudo cargar escuelas.json. Revisa que esté en la misma carpeta que index.html.");
-    console.error(err);
-  });
-
-
-/* =========================
-   EVENTOS DEL PANEL
-========================= */
-
-document.getElementById("priorityFilter").addEventListener("change", drawPriorityLayer);
-document.getElementById("searchBox").addEventListener("input", drawPriorityLayer);
-
-document.getElementById("chkPriority").addEventListener("change", function() {
-  if (!priorityLayer) return;
-  if (this.checked) priorityLayer.addTo(map);
-  else map.removeLayer(priorityLayer);
-});
-
-document.getElementById("chkAgeb").addEventListener("change", function() {
-  if (!agebLayer) return;
-  if (this.checked) agebLayer.addTo(map);
-  else map.removeLayer(agebLayer);
-});
-
-document.getElementById("chkBoundary").addEventListener("change", function() {
-  if (!boundaryLayer) return;
-  if (this.checked) boundaryLayer.addTo(map);
-  else map.removeLayer(boundaryLayer);
-});
-
-document.querySelectorAll(".needChk").forEach(chk => {
-  chk.addEventListener("change", updateNeedLayers);
-});
-
-document.getElementById("resetBtn").addEventListener("click", function() {
-  document.getElementById("searchBox").value = "";
-  document.getElementById("priorityFilter").value = "todas";
-  document.querySelectorAll(".needChk").forEach(chk => chk.checked = false);
-
-  drawPriorityLayer();
-  updateNeedLayers();
-});
-
-</script>
+<script src="js/app.js"></script>
 
 </body>
+
 </html>
