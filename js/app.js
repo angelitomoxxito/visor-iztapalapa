@@ -60,6 +60,30 @@ window.addEventListener(
 
             refreshMap();
 
+            // Leaflet necesita recalcular el tamaño después de que
+            // el grid, los paneles y las fuentes terminen de dibujarse.
+            const fixMapSize = () => {
+                if (!SIGPE.map) return;
+                SIGPE.map.invalidateSize({ pan: false, animate: false });
+            };
+
+            requestAnimationFrame(() => {
+                fixMapSize();
+                setTimeout(fixMapSize, 100);
+                setTimeout(fixMapSize, 350);
+            });
+
+            window.addEventListener("resize", fixMapSize);
+
+            const mapArea = document.querySelector(".map-area");
+            if (mapArea && typeof ResizeObserver !== "undefined") {
+                const mapResizeObserver = new ResizeObserver(() => {
+                    requestAnimationFrame(fixMapSize);
+                });
+                mapResizeObserver.observe(mapArea);
+                SIGPE.mapResizeObserver = mapResizeObserver;
+            }
+
             console.log(
                 "SIGPE-CDMX v3.0 cargado correctamente",
                 {
