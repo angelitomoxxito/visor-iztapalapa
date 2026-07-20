@@ -31,6 +31,7 @@ const SIGPE = {
     currentLevel: "Todos",
     currentAlcaldia: "Todos",
     currentVariable: "total",
+    currentTerritory: "ageb",
 
     selectedSchool: null,
     comparison: [],

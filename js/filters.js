@@ -6,6 +6,7 @@ function initializeFilters() {
     populateLevelFilter();
     populateAlcaldiaFilter();
     connectYearFilter();
+    connectTerritoryFilter();
     connectVariableFilter();
     connectLevelFilter();
     connectAlcaldiaFilter();
@@ -66,6 +67,26 @@ function connectYearFilter() {
             }
         });
     }
+}
+
+
+/* =========================================================
+   UNIDAD TERRITORIAL
+   ========================================================= */
+
+function connectTerritoryFilter() {
+    const selector = byId("territorySelect");
+    if (!selector) return;
+
+    selector.value = SIGPE.currentTerritory;
+    selector.addEventListener("change", event => {
+        SIGPE.currentTerritory = event.target.value === "alcaldia"
+            ? "alcaldia"
+            : "ageb";
+
+        closeSchoolDetails();
+        refreshMap();
+    });
 }
 
 
@@ -276,6 +297,7 @@ function connectClearFiltersButton() {
         SIGPE.currentLevel = "Todos";
         SIGPE.currentAlcaldia = "Todos";
         SIGPE.currentVariable = "total";
+        SIGPE.currentTerritory = "ageb";
 
         const yearSelector = firstExistingElement(
             "yearSelect",
@@ -307,7 +329,9 @@ function connectClearFiltersButton() {
         if (levelSelector) levelSelector.value = "Todos";
         if (alcaldiaSelector) alcaldiaSelector.value = "Todos";
 
+        const territorySelector = byId("territorySelect");
         const variableSelector = byId("variableSelect");
+        if (territorySelector) territorySelector.value = "ageb";
         if (variableSelector) variableSelector.value = "total";
 
         const searchInput = byId("searchInput");
@@ -369,7 +393,9 @@ function zoomToSelectedAlcaldia() {
 function updateDashboard() {
     if (!SIGPE.data.ageb) return;
 
-    const features = getFilteredAGEB();
+    const features = SIGPE.currentTerritory === "alcaldia"
+        ? getFilteredAlcaldias()
+        : getFilteredAGEB();
     const currentField = getCurrentYearField();
 
     const filteredSchools = SIGPE.data.escuelas.filter(school => {
@@ -400,7 +426,7 @@ function updateDashboard() {
 
     const totalSchools = filteredSchools.length;
 
-    const totalAGEB = features.filter(feature =>
+    const totalAGEB = getFilteredAGEB().filter(feature =>
         getFeatureValue(feature) > 0
     ).length;
 

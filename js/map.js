@@ -172,21 +172,57 @@ function drawAlcaldias() {
         SIGPE.map.removeLayer(SIGPE.layers.alcaldias);
     }
 
-    SIGPE.layers.alcaldias = L.geoJSON(
-        SIGPE.data.alcaldias,
-        {
-            style: {
-                color: "#1e3a5f",
-                weight: 2,
-                opacity: 0.85,
-                fillOpacity: 0
-            },
+    const thematic = SIGPE.currentTerritory === "alcaldia";
+    const features = getFilteredAlcaldias();
+    const values = features
+        .map(feature => getFeatureValue(feature))
+        .filter(value => value > 0);
+    const breaks = calculateQuantiles(values);
 
-            interactive: false
+    SIGPE.layers.alcaldias = L.geoJSON(
+        { type: "FeatureCollection", features },
+        {
+            style: feature => thematic
+                ? {
+                    color: "#1e3a5f",
+                    weight: 1.6,
+                    opacity: 0.9,
+                    fillColor: SIGPE.currentVariable === "percentage"
+                        ? getPercentageColor(getFeatureValue(feature))
+                        : getTotalColor(getFeatureValue(feature), breaks),
+                    fillOpacity: 0.78
+                }
+                : {
+                    color: "#1e3a5f",
+                    weight: 2,
+                    opacity: 0.85,
+                    fillOpacity: 0
+                },
+            interactive: thematic,
+            onEachFeature: (feature, layer) => {
+                if (!thematic) return;
+                layer.on({
+                    mouseover: event => {
+                        event.target.setStyle({ weight: 3, color: "#111827", fillOpacity: 0.9 });
+                        event.target.bringToFront();
+                    },
+                    mouseout: event => SIGPE.layers.alcaldias.resetStyle(event.target),
+                    click: () => showAlcaldiaInformation(feature)
+                });
+            }
         }
     );
 
-    SIGPE.layers.alcaldias.addTo(SIGPE.map);
+    if (byId("chkAlcaldias")?.checked !== false) {
+        SIGPE.layers.alcaldias.addTo(SIGPE.map);
+    }
+}
+
+function getFilteredAlcaldias() {
+    return SIGPE.data.alcaldias.features.filter(feature => {
+        const municipality = String(feature.properties.CVE_MUN || "").padStart(3, "0");
+        return SIGPE.currentAlcaldia === "Todos" || municipality === SIGPE.currentAlcaldia;
+    });
 }
 
 
@@ -239,7 +275,7 @@ function drawAGEB() {
         }
     );
 
-    if (byId("chkAGEB")?.checked !== false) {
+    if (SIGPE.currentTerritory === "ageb" && byId("chkAGEB")?.checked !== false) {
         SIGPE.layers.ageb.addTo(SIGPE.map);
     }
 
@@ -293,26 +329,29 @@ function getFilteredAGEB() {
 
 function getFeatureValue(feature) {
     const field = SIGPE.years[SIGPE.currentYearIndex].field;
-    let currentValue;
-    let baseValue;
+    const properties = feature.properties || {};
+    const isAlcaldia = !properties.CVE_AGEB && Boolean(properties.NOMGEO);
+    let currentValue = 0;
+    let baseValue = 0;
 
-    if (SIGPE.currentLevel === "Todos") {
-        currentValue = numberValue(feature.properties[field]);
-        baseValue = numberValue(feature.properties.mat_2024_2025);
+    if (isAlcaldia) {
+        const mun = String(properties.CVE_MUN || "").padStart(3, "0");
+        const schools = SIGPE.data.escuelas.filter(school =>
+            school.mun === mun &&
+            (SIGPE.currentLevel === "Todos" ||
+             normalizeText(school.nivel) === normalizeText(SIGPE.currentLevel))
+        );
+        currentValue = schools.reduce((total, school) => total + numberValue(school[field]), 0);
+        baseValue = schools.reduce((total, school) => total + numberValue(school.mat_2024_2025), 0);
+    } else if (SIGPE.currentLevel === "Todos") {
+        currentValue = numberValue(properties[field]);
+        baseValue = numberValue(properties.mat_2024_2025);
     } else {
-        const schools = getSchoolsForAGEB(feature.properties.CVEGEO)
-            .filter(school =>
-                normalizeText(school.nivel) === normalizeText(SIGPE.currentLevel)
-            );
-
-        currentValue = schools.reduce(
-            (total, school) => total + numberValue(school[field]),
-            0
+        const schools = getSchoolsForAGEB(properties.CVEGEO).filter(school =>
+            normalizeText(school.nivel) === normalizeText(SIGPE.currentLevel)
         );
-        baseValue = schools.reduce(
-            (total, school) => total + numberValue(school.mat_2024_2025),
-            0
-        );
+        currentValue = schools.reduce((total, school) => total + numberValue(school[field]), 0);
+        baseValue = schools.reduce((total, school) => total + numberValue(school.mat_2024_2025), 0);
     }
 
     return SIGPE.currentVariable === "percentage"
@@ -463,6 +502,7 @@ function showAGEBInformation(feature) {
             return `
                 <button
                     class="schoolCard"
+                    style="border-left-color:${getPercentageColor(schoolChange)}"
                     type="button"
                     onclick="selectSchoolById('${escapeAttribute(
                         school.id || school.cct
@@ -531,6 +571,38 @@ function showAGEBInformation(feature) {
    SELECCIONAR ESCUELA DESDE EL AGEB
    ========================================================= */
 
+function showAlcaldiaInformation(feature) {
+    const properties = feature.properties || {};
+    const mun = String(properties.CVE_MUN || "").padStart(3, "0");
+    const currentYear = getCurrentYear();
+    const currentField = currentYear.field;
+    const schools = SIGPE.data.escuelas.filter(school =>
+        school.mun === mun &&
+        (SIGPE.currentLevel === "Todos" ||
+         normalizeText(school.nivel) === normalizeText(SIGPE.currentLevel))
+    );
+    const current = schools.reduce((sum, school) => sum + numberValue(school[currentField]), 0);
+    const base = schools.reduce((sum, school) => sum + numberValue(school.mat_2024_2025), 0);
+    const change = calculatePercentChange(current, base);
+
+    byId("schoolInfo").innerHTML = `
+        <section class="ageb-summary">
+            <h2>${escapeHTML(properties.NOMGEO || "Alcaldía")}</h2>
+            <div class="popup-grid">
+                <span>Clave:</span><strong>${escapeHTML(mun)}</strong>
+                <span>Ciclo:</span><strong>${currentYear.label}</strong>
+                <span>Matrícula:</span><strong>${formatNumber(current)}</strong>
+                <span>Escuelas:</span><strong>${formatNumber(schools.length)}</strong>
+                <span>Cambio acumulado:</span><strong>${formatPercent(change)}</strong>
+            </div>
+        </section>`;
+    byId("projectionTable").innerHTML = "";
+    byId("similarSchools").innerHTML = "";
+    renderConapoComparison(mun);
+    openSidebar();
+}
+
+
 function selectSchoolById(identifier) {
     const school = SIGPE.data.escuelas.find(item =>
         String(item.id || item.cct) === String(identifier)
@@ -551,13 +623,14 @@ function selectSchoolById(identifier) {
 
 function refreshMap() {
     drawAGEB();
+    drawAlcaldias();
 
-    if (
-        SIGPE.layers.alcaldias &&
-        !SIGPE.map.hasLayer(SIGPE.layers.alcaldias) &&
-        byId("chkAlcaldias")?.checked
-    ) {
-        SIGPE.layers.alcaldias.addTo(SIGPE.map);
+    if (SIGPE.currentTerritory === "ageb") {
+        toggleLayer(SIGPE.layers.ageb, byId("chkAGEB")?.checked !== false);
+        toggleLayer(SIGPE.layers.alcaldias, byId("chkAlcaldias")?.checked !== false);
+    } else {
+        toggleLayer(SIGPE.layers.ageb, false);
+        toggleLayer(SIGPE.layers.alcaldias, byId("chkAlcaldias")?.checked !== false);
     }
 
     updateDashboard();
