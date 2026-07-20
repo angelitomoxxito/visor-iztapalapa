@@ -30,6 +30,7 @@ const SIGPE = {
     currentYearIndex: 0,
     currentLevel: "Todos",
     currentAlcaldia: "Todos",
+    currentVariable: "total",
 
     selectedSchool: null,
     comparison: [],

@@ -47,6 +47,13 @@ function removeSchoolComparison(cct) {
 }
 
 
+
+function clearSchoolComparison() {
+    SIGPE.comparison = [];
+    renderComparison();
+    closeComparisonModal();
+}
+
 function ensureComparisonModal() {
     if (byId("comparisonModal")) return;
 
@@ -70,6 +77,13 @@ function ensureComparisonModal() {
                     aria-label="Cerrar comparación"
                 >
                     ✕
+                </button>
+            </div>
+
+            <div class="comparison-toolbar">
+                <button type="button" class="danger-button" onclick="clearSchoolComparison()">
+                    <i class="fa-solid fa-trash"></i>
+                    Limpiar comparación
                 </button>
             </div>
 
@@ -112,6 +126,13 @@ function renderComparison() {
     const tableContainer = byId("comparisonTable");
 
     if (!schoolsContainer || !tableContainer) return;
+
+    if (SIGPE.comparison.length === 0) {
+        schoolsContainer.innerHTML = '<p class="empty-message">No hay escuelas agregadas a la comparación.</p>';
+        tableContainer.innerHTML = "";
+        destroyComparisonChart();
+        return;
+    }
 
     schoolsContainer.innerHTML = SIGPE.comparison
         .map(school => `

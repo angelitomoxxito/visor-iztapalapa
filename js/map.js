@@ -293,22 +293,31 @@ function getFilteredAGEB() {
 
 function getFeatureValue(feature) {
     const field = SIGPE.years[SIGPE.currentYearIndex].field;
+    let currentValue;
+    let baseValue;
 
     if (SIGPE.currentLevel === "Todos") {
-        return numberValue(feature.properties[field]);
-    }
+        currentValue = numberValue(feature.properties[field]);
+        baseValue = numberValue(feature.properties.mat_2024_2025);
+    } else {
+        const schools = getSchoolsForAGEB(feature.properties.CVEGEO)
+            .filter(school =>
+                normalizeText(school.nivel) === normalizeText(SIGPE.currentLevel)
+            );
 
-    return getSchoolsForAGEB(feature.properties.CVEGEO)
-        .filter(
-            school =>
-                normalizeText(school.nivel) ===
-                normalizeText(SIGPE.currentLevel)
-        )
-        .reduce(
-            (total, school) =>
-                total + numberValue(school[field]),
+        currentValue = schools.reduce(
+            (total, school) => total + numberValue(school[field]),
             0
         );
+        baseValue = schools.reduce(
+            (total, school) => total + numberValue(school.mat_2024_2025),
+            0
+        );
+    }
+
+    return SIGPE.currentVariable === "percentage"
+        ? calculatePercentChange(currentValue, baseValue)
+        : currentValue;
 }
 
 
@@ -318,7 +327,9 @@ function getAGEBStyle(feature, breaks) {
     return {
         color: "#475569",
         weight: 0.65,
-        fillColor: getTotalColor(value, breaks),
+        fillColor: SIGPE.currentVariable === "percentage"
+            ? getPercentageColor(value)
+            : getTotalColor(value, breaks),
         fillOpacity: 0.78
     };
 }
@@ -356,6 +367,19 @@ function getTotalColor(value, breaks) {
     if (value <= breaks[3]) return "#3182bd";
 
     return "#08519c";
+}
+
+function getPercentageColor(value) {
+    if (value === null || !Number.isFinite(Number(value))) return "#d1d5db";
+    if (value < -10) return "#7f0000";
+    if (value < -7) return "#b2182b";
+    if (value < -4) return "#d6604d";
+    if (value < -2) return "#f4a582";
+    if (value <= 2) return "#f7f7f7";
+    if (value <= 5) return "#d9f0d3";
+    if (value <= 10) return "#7fbf7b";
+    if (value <= 20) return "#1b7837";
+    return "#00441b";
 }
 
 
@@ -498,6 +522,7 @@ function showAGEBInformation(feature) {
     byId("projectionTable").innerHTML = "";
     byId("similarSchools").innerHTML = "";
 
+    renderConapoComparison(String(properties.CVE_MUN || "").padStart(3, "0"));
     openSidebar();
 }
 

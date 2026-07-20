@@ -50,8 +50,9 @@ function openSidebar() {
 
     if (!panel) return;
 
+    panel.classList.remove("closed");
     panel.classList.add("open");
-    panel.style.display = "flex";
+    document.querySelector(".app-layout")?.classList.remove("details-closed");
 
     setTimeout(() => {
         SIGPE.map?.invalidateSize();
@@ -66,9 +67,13 @@ function closeSchoolDetails() {
 
     if (panel) {
         panel.classList.remove("open");
+        panel.classList.add("closed");
     }
 
+    document.querySelector(".app-layout")?.classList.add("details-closed");
     destroySchoolChart();
+    destroyConapoChart();
+    setTimeout(() => SIGPE.map?.invalidateSize(false), 80);
 }
 
 
@@ -81,6 +86,7 @@ function selectSchool(school) {
     renderProjectionTable(school);
     renderSchoolChart(school);
     renderSimilarSchools(school);
+    renderConapoComparison(school.mun);
 
     openSidebar();
 }

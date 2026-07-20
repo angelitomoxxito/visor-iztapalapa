@@ -65,6 +65,14 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="variableSelect">Representar en el mapa</label>
+                    <select id="variableSelect">
+                        <option value="total">Matrícula total</option>
+                        <option value="percentage">Variación porcentual</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
                     <div class="range-label-row">
                         <label for="yearSlider">Desplazamiento temporal</label>
                         <strong id="currentCycle">2024-2025</strong>
@@ -246,6 +254,21 @@
 
                     <div class="chart-wrapper">
                         <canvas id="chartMatricula"></canvas>
+                    </div>
+                </section>
+
+                <section class="detail-section" id="conapoSection">
+                    <div class="detail-section-heading">
+                        <div>
+                            <span class="section-eyebrow">Comparación demográfica</span>
+                            <h3>Matrícula vs CONAPO 0–14</h3>
+                        </div>
+                    </div>
+                    <div id="conapoSummary" class="conapo-summary">
+                        <p class="empty-message">Selecciona un AGEB o una escuela para consultar la comparación de su alcaldía.</p>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="conapoChart"></canvas>
                     </div>
                 </section>
 

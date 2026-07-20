@@ -6,6 +6,7 @@ function initializeFilters() {
     populateLevelFilter();
     populateAlcaldiaFilter();
     connectYearFilter();
+    connectVariableFilter();
     connectLevelFilter();
     connectAlcaldiaFilter();
     connectClearFiltersButton();
@@ -65,6 +66,24 @@ function connectYearFilter() {
             }
         });
     }
+}
+
+
+/* =========================================================
+   VARIABLE DEL MAPA
+   ========================================================= */
+
+function connectVariableFilter() {
+    const selector = byId("variableSelect");
+    if (!selector) return;
+
+    selector.value = SIGPE.currentVariable;
+    selector.addEventListener("change", event => {
+        SIGPE.currentVariable = event.target.value === "percentage"
+            ? "percentage"
+            : "total";
+        refreshMap();
+    });
 }
 
 
@@ -256,6 +275,7 @@ function connectClearFiltersButton() {
         SIGPE.currentYearIndex = 0;
         SIGPE.currentLevel = "Todos";
         SIGPE.currentAlcaldia = "Todos";
+        SIGPE.currentVariable = "total";
 
         const yearSelector = firstExistingElement(
             "yearSelect",
@@ -286,6 +306,9 @@ function connectClearFiltersButton() {
         if (yearSlider) yearSlider.value = "0";
         if (levelSelector) levelSelector.value = "Todos";
         if (alcaldiaSelector) alcaldiaSelector.value = "Todos";
+
+        const variableSelector = byId("variableSelect");
+        if (variableSelector) variableSelector.value = "total";
 
         const searchInput = byId("searchInput");
 
@@ -436,59 +459,49 @@ function setDashboardValue(ids, value) {
 
 function updateMapLegend(features) {
     const legend = byId("legend");
-
     if (!legend) return;
+
+    if (SIGPE.currentVariable === "percentage") {
+        const items = [
+            ["Sin base", "#d1d5db"],
+            ["Menor a -10%", "#7f0000"],
+            ["-10% a -7%", "#b2182b"],
+            ["-7% a -4%", "#d6604d"],
+            ["-4% a -2%", "#f4a582"],
+            ["-2% a +2%", "#f7f7f7"],
+            ["+2% a +5%", "#d9f0d3"],
+            ["+5% a +10%", "#7fbf7b"],
+            ["+10% a +20%", "#1b7837"],
+            ["Mayor a +20%", "#00441b"]
+        ];
+
+        legend.innerHTML = items.map(([label, color]) => `
+            <div class="legend-item">
+                <span class="legend-color" style="background:${color}"></span>
+                <span>${label}</span>
+            </div>
+        `).join("");
+        return;
+    }
 
     const values = features
         .map(feature => getFeatureValue(feature))
         .filter(value => value > 0);
 
     const breaks = calculateQuantiles(values);
-
     const items = [
-        {
-            label: "Sin matrícula",
-            color: "#e5e7eb"
-        },
-        {
-            label: `1 – ${formatNumber(Math.round(breaks[0]))}`,
-            color: getTotalColor(1, breaks)
-        },
-        {
-            label:
-                `${formatNumber(Math.round(breaks[0] + 1))} – ` +
-                `${formatNumber(Math.round(breaks[1]))}`,
-            color: getTotalColor(breaks[0] + 1, breaks)
-        },
-        {
-            label:
-                `${formatNumber(Math.round(breaks[1] + 1))} – ` +
-                `${formatNumber(Math.round(breaks[2]))}`,
-            color: getTotalColor(breaks[1] + 1, breaks)
-        },
-        {
-            label:
-                `${formatNumber(Math.round(breaks[2] + 1))} – ` +
-                `${formatNumber(Math.round(breaks[3]))}`,
-            color: getTotalColor(breaks[2] + 1, breaks)
-        },
-        {
-            label:
-                `Más de ${formatNumber(Math.round(breaks[3]))}`,
-            color: getTotalColor(breaks[3] + 1, breaks)
-        }
+        { label: "Sin matrícula", color: "#e5e7eb" },
+        { label: `1 – ${formatNumber(Math.round(breaks[0]))}`, color: getTotalColor(1, breaks) },
+        { label: `${formatNumber(Math.round(breaks[0] + 1))} – ${formatNumber(Math.round(breaks[1]))}`, color: getTotalColor(breaks[0] + 1, breaks) },
+        { label: `${formatNumber(Math.round(breaks[1] + 1))} – ${formatNumber(Math.round(breaks[2]))}`, color: getTotalColor(breaks[1] + 1, breaks) },
+        { label: `${formatNumber(Math.round(breaks[2] + 1))} – ${formatNumber(Math.round(breaks[3]))}`, color: getTotalColor(breaks[2] + 1, breaks) },
+        { label: `Más de ${formatNumber(Math.round(breaks[3]))}`, color: getTotalColor(breaks[3] + 1, breaks) }
     ];
 
-    legend.innerHTML = items
-        .map(item => `
-            <div class="legend-item">
-                <span
-                    class="legend-color"
-                    style="background:${item.color}"
-                ></span>
-
-                <span>${item.label}</span>
-            </div>
-        `)
-        .join("");
+    legend.innerHTML = items.map(item => `
+        <div class="legend-item">
+            <span class="legend-color" style="background:${item.color}"></span>
+            <span>${item.label}</span>
+        </div>
+    `).join("");
 }
