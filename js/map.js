@@ -208,8 +208,12 @@ function drawAlcaldias() {
                     fillOpacity: matchesRange ? 0.78 : 0.04
                 };
             },
-            interactive: true,
+            // En modo AGEB los polígonos de alcaldía son sólo contornos.
+            // Deben dejar pasar el clic hacia las AGEB que están debajo.
+            interactive: thematic,
             onEachFeature: (feature, layer) => {
+                if (!thematic) return;
+
                 layer.bindTooltip(
                     () => buildAlcaldiaTooltip(feature),
                     {
@@ -227,9 +231,7 @@ function drawAlcaldias() {
                         event.target.bringToFront();
                     },
                     mouseout: event => SIGPE.layers.alcaldias.resetStyle(event.target),
-                    click: () => {
-                        if (thematic) showAlcaldiaInformation(feature);
-                    }
+                    click: () => showAlcaldiaInformation(feature)
                 });
             }
         }
@@ -287,6 +289,42 @@ function buildAlcaldiaTooltip(feature) {
     `;
 }
 
+function getAlcaldiaFeatureForAGEB(agebFeature) {
+    const municipality = String(agebFeature?.properties?.CVE_MUN || "").padStart(3, "0");
+    return SIGPE.data.alcaldias.features.find(feature =>
+        String(feature.properties?.CVE_MUN || "").padStart(3, "0") === municipality
+    );
+}
+
+function showAlcaldiaTooltipFromAGEB(agebFeature, latlng) {
+    if (SIGPE.currentTerritory !== "ageb") return;
+
+    const alcaldiaFeature = getAlcaldiaFeatureForAGEB(agebFeature);
+    if (!alcaldiaFeature) return;
+
+    if (!SIGPE.alcaldiaHoverTooltip) {
+        SIGPE.alcaldiaHoverTooltip = L.tooltip({
+            permanent: false,
+            direction: "top",
+            offset: [0, -10],
+            opacity: 1,
+            interactive: false,
+            className: "alcaldia-hover-tooltip"
+        });
+    }
+
+    SIGPE.alcaldiaHoverTooltip
+        .setLatLng(latlng)
+        .setContent(buildAlcaldiaTooltip(alcaldiaFeature))
+        .addTo(SIGPE.map);
+}
+
+function hideAlcaldiaTooltipFromAGEB() {
+    if (SIGPE.alcaldiaHoverTooltip && SIGPE.map.hasLayer(SIGPE.alcaldiaHoverTooltip)) {
+        SIGPE.map.removeLayer(SIGPE.alcaldiaHoverTooltip);
+    }
+}
+
 
 /* =========================================================
    DIBUJAR AGEB
@@ -323,13 +361,22 @@ function drawAGEB() {
                         });
 
                         event.target.bringToFront();
+                        showAlcaldiaTooltipFromAGEB(feature, event.latlng);
+                    },
+
+                    mousemove: event => {
+                        if (SIGPE.currentTerritory === "ageb" && SIGPE.alcaldiaHoverTooltip) {
+                            SIGPE.alcaldiaHoverTooltip.setLatLng(event.latlng);
+                        }
                     },
 
                     mouseout: event => {
                         SIGPE.layers.ageb.resetStyle(event.target);
+                        hideAlcaldiaTooltipFromAGEB();
                     },
 
                     click: () => {
+                        hideAlcaldiaTooltipFromAGEB();
                         showAGEBInformation(feature);
                     }
                 });
