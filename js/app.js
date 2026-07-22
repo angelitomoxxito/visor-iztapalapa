@@ -59,6 +59,7 @@ window.addEventListener(
             initializeSidebar();
             initializeComparison();
             initializeLayerControls();
+            initializeCollapsibleSections();
             initializeFullscreen();
 
             refreshMap();
@@ -102,3 +103,14 @@ window.addEventListener(
         }
     }
 );
+
+function initializeCollapsibleSections() {
+    const section = byId("layersSection");
+    const button = byId("layersToggle");
+    if (!section || !button) return;
+
+    button.addEventListener("click", () => {
+        const collapsed = section.classList.toggle("is-collapsed");
+        button.setAttribute("aria-expanded", String(!collapsed));
+    });
+}

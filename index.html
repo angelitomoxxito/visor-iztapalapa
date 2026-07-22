@@ -98,6 +98,12 @@
                     <small class="field-help">El mapa mostrará solo las unidades que pertenezcan al rango elegido.</small>
                 </div>
 
+                <div id="miniVariableLegend" class="mini-variable-legend" aria-live="polite">
+                    <div class="mini-legend-heading">Escala de matrícula</div>
+                    <div class="mini-color-bar mini-color-bar-total" aria-hidden="true"></div>
+                    <div class="mini-color-labels"><span>Menor</span><span>Mayor</span></div>
+                </div>
+
                 <div class="form-group">
                     <div class="range-label-row">
                         <label for="yearSlider">Desplazamiento temporal</label>
@@ -134,13 +140,16 @@
                 </div>
             </section>
 
-            <section class="panel-section">
-                <div class="section-title">
-                    <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
-                    <h3>Capas del mapa</h3>
-                </div>
+            <section class="panel-section collapsible-section" id="layersSection">
+                <button class="section-title section-toggle" id="layersToggle" type="button" aria-expanded="true" aria-controls="layersContent">
+                    <span class="section-title-label">
+                        <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
+                        <h3>Capas del mapa</h3>
+                    </span>
+                    <i class="fa-solid fa-chevron-up section-toggle-icon" aria-hidden="true"></i>
+                </button>
 
-                <div class="layer-list">
+                <div class="layer-list collapsible-content" id="layersContent">
                     <label id="agebLayerOption" class="layer-option">
                         <input id="chkAGEB" type="checkbox" checked>
                         <span class="layer-option-text">
@@ -227,6 +236,11 @@
                     <a class="download-link" href="data/analisis_alcaldias.csv" download>
                         <i class="fa-solid fa-file-csv" aria-hidden="true"></i>
                         Análisis por alcaldía
+                    </a>
+
+                    <a class="download-link" href="docs/ficha_metodologica_SIGPE_CDMX.pdf" download>
+                        <i class="fa-solid fa-file-pdf" aria-hidden="true"></i>
+                        Ficha metodológica
                     </a>
                 </div>
             </section>

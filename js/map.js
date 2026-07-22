@@ -173,8 +173,11 @@ function drawAlcaldias() {
     }
 
     const thematic = SIGPE.currentTerritory === "alcaldia";
+    // Los límites se conservan aunque un filtro porcentual deje pocas
+    // escuelas visibles. Esto mantiene la referencia territorial completa.
     const features = getFilteredAlcaldias();
-    const values = features
+    const matchingFeatures = features.filter(feature => alcaldiaMatchesActiveRange(feature));
+    const values = matchingFeatures
         .map(feature => getFeatureValue(feature))
         .filter(value => value > 0);
     const breaks = calculateQuantiles(values);
@@ -182,32 +185,50 @@ function drawAlcaldias() {
     SIGPE.layers.alcaldias = L.geoJSON(
         { type: "FeatureCollection", features },
         {
-            style: feature => thematic
-                ? {
-                    color: "#1e3a5f",
-                    weight: 1.6,
-                    opacity: 0.9,
-                    fillColor: SIGPE.currentVariable === "percentage"
-                        ? getPercentageColor(getFeatureValue(feature))
-                        : getTotalColor(getFeatureValue(feature), breaks),
-                    fillOpacity: 0.78
+            style: feature => {
+                const matchesRange = alcaldiaMatchesActiveRange(feature);
+                if (!thematic) {
+                    return {
+                        color: "#1e3a5f",
+                        weight: 2,
+                        opacity: 0.9,
+                        fillOpacity: 0
+                    };
                 }
-                : {
+
+                return {
                     color: "#1e3a5f",
-                    weight: 2,
-                    opacity: 0.85,
-                    fillOpacity: 0
-                },
-            interactive: thematic,
+                    weight: 1.8,
+                    opacity: 0.95,
+                    fillColor: matchesRange
+                        ? (SIGPE.currentVariable === "percentage"
+                            ? getPercentageColor(getFeatureValue(feature))
+                            : getTotalColor(getFeatureValue(feature), breaks))
+                        : "#ffffff",
+                    fillOpacity: matchesRange ? 0.78 : 0.04
+                };
+            },
+            interactive: true,
             onEachFeature: (feature, layer) => {
-                if (!thematic) return;
+                layer.bindTooltip(
+                    () => buildAlcaldiaTooltip(feature),
+                    {
+                        sticky: true,
+                        direction: "top",
+                        opacity: 1,
+                        className: "alcaldia-hover-tooltip"
+                    }
+                );
+
                 layer.on({
                     mouseover: event => {
-                        event.target.setStyle({ weight: 3, color: "#111827", fillOpacity: 0.9 });
+                        event.target.setStyle({ weight: 3, color: "#111827" });
                         event.target.bringToFront();
                     },
                     mouseout: event => SIGPE.layers.alcaldias.resetStyle(event.target),
-                    click: () => showAlcaldiaInformation(feature)
+                    click: () => {
+                        if (thematic) showAlcaldiaInformation(feature);
+                    }
                 });
             }
         }
@@ -221,11 +242,48 @@ function drawAlcaldias() {
 function getFilteredAlcaldias() {
     return SIGPE.data.alcaldias.features.filter(feature => {
         const municipality = String(feature.properties.CVE_MUN || "").padStart(3, "0");
-        const matchesAlcaldia = SIGPE.currentAlcaldia === "Todos" || municipality === SIGPE.currentAlcaldia;
-        const value = getFeatureValue(feature);
-        const matchesVariation = SIGPE.currentVariable !== "percentage" || matchesPercentageRange(value);
-        return matchesAlcaldia && matchesVariation;
+        return SIGPE.currentAlcaldia === "Todos" || municipality === SIGPE.currentAlcaldia;
     });
+}
+
+function alcaldiaMatchesActiveRange(feature) {
+    if (SIGPE.currentVariable !== "percentage") return true;
+    return matchesPercentageRange(getFeatureValue(feature));
+}
+
+function getVisibleSchoolsForAlcaldia(feature) {
+    const municipality = String(feature.properties.CVE_MUN || "").padStart(3, "0");
+    const field = getCurrentYearField();
+
+    return SIGPE.data.escuelas.filter(school => {
+        const matchesMunicipality = String(school.mun || "").padStart(3, "0") === municipality;
+        const matchesLevel = SIGPE.currentLevel === "Todos" ||
+            normalizeText(school.nivel) === normalizeText(SIGPE.currentLevel);
+        const change = calculatePercentChange(
+            numberValue(school[field]),
+            numberValue(school.mat_2024_2025)
+        );
+        const matchesRange = SIGPE.currentVariable !== "percentage" || matchesPercentageRange(change);
+        return matchesMunicipality && matchesLevel && matchesRange;
+    });
+}
+
+function buildAlcaldiaTooltip(feature) {
+    const schools = getVisibleSchoolsForAlcaldia(feature);
+    const field = getCurrentYearField();
+    const current = schools.reduce((sum, school) => sum + numberValue(school[field]), 0);
+    const base = schools.reduce((sum, school) => sum + numberValue(school.mat_2024_2025), 0);
+    const change = calculatePercentChange(current, base);
+    const name = feature.properties.NOMGEO || feature.properties.NOM_MUN || "Alcaldía";
+
+    return `
+        <div class="alcaldia-tooltip-content">
+            <strong>${escapeHTML(name)}</strong>
+            <div class="alcaldia-tooltip-row"><span>Escuelas visibles</span><b>${formatNumber(schools.length)}</b></div>
+            <div class="alcaldia-tooltip-row"><span>Matrícula ${escapeHTML(getCurrentYear().label)}</span><b>${formatNumber(current)}</b></div>
+            <div class="alcaldia-tooltip-row"><span>Variación</span><b>${formatPercentage(change)}</b></div>
+        </div>
+    `;
 }
 
 

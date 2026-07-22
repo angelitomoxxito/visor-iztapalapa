@@ -134,6 +134,7 @@ function updateTerritoryUI() {
     byId("schoolsLayerOption")?.classList.toggle("is-hidden", isAlcaldia);
     byId("alcaldiaLayerOption")?.classList.toggle("is-hidden", false);
     byId("percentageRangeGroup")?.classList.toggle("is-hidden", SIGPE.currentVariable !== "percentage");
+    updateMiniVariableLegend();
 
     const unitsLabel = byId("unitsStatLabel");
     if (unitsLabel) unitsLabel.textContent = isAlcaldia ? "Alcaldías mostradas" : "AGEB con matrícula";
@@ -142,6 +143,26 @@ function updateTerritoryUI() {
     if (status) status.innerHTML = isAlcaldia
         ? '<i class="fa-solid fa-circle-info" aria-hidden="true"></i> Selecciona una alcaldía para consultar su evolución y la comparación con CONAPO.'
         : '<i class="fa-solid fa-circle-info" aria-hidden="true"></i> Selecciona un AGEB para consultar sus escuelas.';
+}
+
+
+function updateMiniVariableLegend() {
+    const container = byId("miniVariableLegend");
+    if (!container) return;
+
+    if (SIGPE.currentVariable === "percentage") {
+        container.innerHTML = `
+            <div class="mini-legend-heading">Escala de variación porcentual</div>
+            <div class="mini-color-bar mini-color-bar-percentage" aria-hidden="true"></div>
+            <div class="mini-color-labels"><span>Disminución</span><span>Estable</span><span>Crecimiento</span></div>
+        `;
+    } else {
+        container.innerHTML = `
+            <div class="mini-legend-heading">Escala de matrícula</div>
+            <div class="mini-color-bar mini-color-bar-total" aria-hidden="true"></div>
+            <div class="mini-color-labels"><span>Menor</span><span>Mayor</span></div>
+        `;
+    }
 }
 
 
