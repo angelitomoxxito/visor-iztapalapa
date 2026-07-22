@@ -214,17 +214,6 @@ function drawAlcaldias() {
             onEachFeature: (feature, layer) => {
                 if (!thematic) return;
 
-                layer.bindTooltip(
-                    () => buildAlcaldiaTooltip(feature),
-                    {
-                        sticky: true,
-                        direction: "top",
-                        opacity: 1,
-                        interactive: false,
-                        className: "alcaldia-hover-tooltip"
-                    }
-                );
-
                 layer.on({
                     mouseover: event => {
                         event.target.setStyle({ weight: 3, color: "#111827" });
@@ -271,59 +260,6 @@ function getVisibleSchoolsForAlcaldia(feature) {
     });
 }
 
-function buildAlcaldiaTooltip(feature) {
-    const schools = getVisibleSchoolsForAlcaldia(feature);
-    const field = getCurrentYearField();
-    const current = schools.reduce((sum, school) => sum + numberValue(school[field]), 0);
-    const base = schools.reduce((sum, school) => sum + numberValue(school.mat_2024_2025), 0);
-    const change = calculatePercentChange(current, base);
-    const name = feature.properties.NOMGEO || feature.properties.NOM_MUN || "Alcaldía";
-
-    return `
-        <div class="alcaldia-tooltip-content">
-            <strong>${escapeHTML(name)}</strong>
-            <div class="alcaldia-tooltip-row"><span>Escuelas visibles</span><b>${formatNumber(schools.length)}</b></div>
-            <div class="alcaldia-tooltip-row"><span>Matrícula ${escapeHTML(getCurrentYear().label)}</span><b>${formatNumber(current)}</b></div>
-            <div class="alcaldia-tooltip-row"><span>Variación</span><b>${formatPercentage(change)}</b></div>
-        </div>
-    `;
-}
-
-function getAlcaldiaFeatureForAGEB(agebFeature) {
-    const municipality = String(agebFeature?.properties?.CVE_MUN || "").padStart(3, "0");
-    return SIGPE.data.alcaldias.features.find(feature =>
-        String(feature.properties?.CVE_MUN || "").padStart(3, "0") === municipality
-    );
-}
-
-function showAlcaldiaTooltipFromAGEB(agebFeature, latlng) {
-    if (SIGPE.currentTerritory !== "ageb") return;
-
-    const alcaldiaFeature = getAlcaldiaFeatureForAGEB(agebFeature);
-    if (!alcaldiaFeature) return;
-
-    if (!SIGPE.alcaldiaHoverTooltip) {
-        SIGPE.alcaldiaHoverTooltip = L.tooltip({
-            permanent: false,
-            direction: "top",
-            offset: [0, -10],
-            opacity: 1,
-            interactive: false,
-            className: "alcaldia-hover-tooltip"
-        });
-    }
-
-    SIGPE.alcaldiaHoverTooltip
-        .setLatLng(latlng)
-        .setContent(buildAlcaldiaTooltip(alcaldiaFeature))
-        .addTo(SIGPE.map);
-}
-
-function hideAlcaldiaTooltipFromAGEB() {
-    if (SIGPE.alcaldiaHoverTooltip && SIGPE.map.hasLayer(SIGPE.alcaldiaHoverTooltip)) {
-        SIGPE.map.removeLayer(SIGPE.alcaldiaHoverTooltip);
-    }
-}
 
 
 /* =========================================================
@@ -361,22 +297,13 @@ function drawAGEB() {
                         });
 
                         event.target.bringToFront();
-                        showAlcaldiaTooltipFromAGEB(feature, event.latlng);
-                    },
-
-                    mousemove: event => {
-                        if (SIGPE.currentTerritory === "ageb" && SIGPE.alcaldiaHoverTooltip) {
-                            SIGPE.alcaldiaHoverTooltip.setLatLng(event.latlng);
-                        }
                     },
 
                     mouseout: event => {
                         SIGPE.layers.ageb.resetStyle(event.target);
-                        hideAlcaldiaTooltipFromAGEB();
                     },
 
                     click: () => {
-                        hideAlcaldiaTooltipFromAGEB();
                         showAGEBInformation(feature);
                     }
                 });
