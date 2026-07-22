@@ -498,6 +498,9 @@ function getFilteredSchoolsForAGEB(cvegeo) {
    ========================================================= */
 
 function showAGEBInformation(feature) {
+    SIGPE.selectedTerritoryFeature = feature;
+    SIGPE.selectedTerritoryType = "ageb";
+    SIGPE.selectedSchool = null;
     setDetailMode("ageb");
     const properties = feature.properties;
 
@@ -614,6 +617,9 @@ function showAGEBInformation(feature) {
    ========================================================= */
 
 function showAlcaldiaInformation(feature) {
+    SIGPE.selectedTerritoryFeature = feature;
+    SIGPE.selectedTerritoryType = "alcaldia";
+    SIGPE.selectedSchool = null;
     setDetailMode("alcaldia");
     const properties = feature.properties || {};
     const mun = String(properties.CVE_MUN || "").padStart(3, "0");
@@ -670,6 +676,31 @@ function selectSchoolById(identifier) {
     }
 
     selectSchool(school);
+}
+
+
+/* =========================================================
+   ACTUALIZAR EL PANEL ABIERTO AL MOVER EL CICLO
+   ========================================================= */
+
+function refreshOpenDetails() {
+    const panel = byId("detailsPanel");
+    const isOpen = panel?.classList.contains("open") && !panel?.classList.contains("closed");
+    if (!isOpen) return;
+
+    if (SIGPE.selectedSchool) {
+        selectSchool(SIGPE.selectedSchool);
+        return;
+    }
+
+    if (SIGPE.selectedTerritoryFeature && SIGPE.selectedTerritoryType === "ageb") {
+        showAGEBInformation(SIGPE.selectedTerritoryFeature);
+        return;
+    }
+
+    if (SIGPE.selectedTerritoryFeature && SIGPE.selectedTerritoryType === "alcaldia") {
+        showAlcaldiaInformation(SIGPE.selectedTerritoryFeature);
+    }
 }
 
 

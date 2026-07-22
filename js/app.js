@@ -35,6 +35,8 @@ const SIGPE = {
     currentPercentageRange: "all",
 
     selectedSchool: null,
+    selectedTerritoryFeature: null,
+    selectedTerritoryType: null,
     comparison: [],
     initialBoundsApplied: false
 };

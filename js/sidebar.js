@@ -80,6 +80,8 @@ function openSidebar() {
 
 function closeSchoolDetails() {
     SIGPE.selectedSchool = null;
+    SIGPE.selectedTerritoryFeature = null;
+    SIGPE.selectedTerritoryType = null;
 
     const panel = byId("detailsPanel");
 
@@ -101,6 +103,8 @@ function selectSchool(school) {
     setDetailMode("school");
 
     SIGPE.selectedSchool = school;
+    SIGPE.selectedTerritoryFeature = null;
+    SIGPE.selectedTerritoryType = null;
 
     renderSchoolInformation(school);
     renderProjectionTable(school);

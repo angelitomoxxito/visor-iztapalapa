@@ -42,10 +42,7 @@ function connectYearFilter() {
             }
 
             refreshMap();
-
-            if (SIGPE.selectedSchool) {
-                selectSchool(SIGPE.selectedSchool);
-            }
+            refreshOpenDetails();
         });
     }
 
@@ -62,10 +59,7 @@ function connectYearFilter() {
             }
 
             refreshMap();
-
-            if (SIGPE.selectedSchool) {
-                selectSchool(SIGPE.selectedSchool);
-            }
+            refreshOpenDetails();
         });
     }
 }
