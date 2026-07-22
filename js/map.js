@@ -216,6 +216,7 @@ function drawAlcaldias() {
                         sticky: true,
                         direction: "top",
                         opacity: 1,
+                        interactive: false,
                         className: "alcaldia-hover-tooltip"
                     }
                 );

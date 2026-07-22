@@ -61,3 +61,7 @@ button{cursor:pointer}
 .alcaldia-hover-tooltip{background:rgba(15,23,42,.94);color:#fff;border:0;border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.22);padding:0}
 .alcaldia-hover-tooltip:before{border-top-color:rgba(15,23,42,.94)}
 .alcaldia-tooltip-content{min-width:175px;padding:9px 10px;font-size:11px;line-height:1.35}.alcaldia-tooltip-content strong{display:block;font-size:12px;margin-bottom:5px}.alcaldia-tooltip-row{display:flex;justify-content:space-between;gap:14px}.alcaldia-tooltip-row span:first-child{color:rgba(255,255,255,.72)}
+
+
+.alcaldia-hover-tooltip{pointer-events:none;}
+.leaflet-tooltip{pointer-events:none;}
