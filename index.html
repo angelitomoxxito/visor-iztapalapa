@@ -80,6 +80,24 @@
                     </select>
                 </div>
 
+                <div id="percentageRangeGroup" class="form-group is-hidden">
+                    <label for="percentageRangeFilter">Mostrar únicamente</label>
+                    <select id="percentageRangeFilter">
+                        <option value="all">Todos los rangos</option>
+                        <option value="no-base">Sin base de comparación</option>
+                        <option value="lt-10">Disminución mayor a 10%</option>
+                        <option value="-10--7">-10% a -7%</option>
+                        <option value="-7--4">-7% a -4%</option>
+                        <option value="-4--2">-4% a -2%</option>
+                        <option value="-2-2">Estabilidad: -2% a +2%</option>
+                        <option value="2-5">+2% a +5%</option>
+                        <option value="5-10">+5% a +10%</option>
+                        <option value="10-20">+10% a +20%</option>
+                        <option value="gt20">Crecimiento mayor a 20%</option>
+                    </select>
+                    <small class="field-help">El mapa mostrará solo las unidades que pertenezcan al rango elegido.</small>
+                </div>
+
                 <div class="form-group">
                     <div class="range-label-row">
                         <label for="yearSlider">Desplazamiento temporal</label>
@@ -101,14 +119,14 @@
                     <h3>Filtros territoriales</h3>
                 </div>
 
-                <div class="form-group">
+                <div id="levelFilterGroup" class="form-group">
                     <label for="levelFilter">Nivel educativo</label>
                     <select id="levelFilter">
                         <option value="Todos">Todos los niveles</option>
                     </select>
                 </div>
 
-                <div class="form-group">
+                <div id="alcaldiaFilterGroup" class="form-group">
                     <label for="alcaldiaFilter">Alcaldía</label>
                     <select id="alcaldiaFilter">
                         <option value="Todos">Todas las alcaldías</option>
@@ -123,7 +141,7 @@
                 </div>
 
                 <div class="layer-list">
-                    <label class="layer-option">
+                    <label id="agebLayerOption" class="layer-option">
                         <input id="chkAGEB" type="checkbox" checked>
                         <span class="layer-option-text">
                             <strong>AGEB</strong>
@@ -131,7 +149,7 @@
                         </span>
                     </label>
 
-                    <label class="layer-option">
+                    <label id="alcaldiaLayerOption" class="layer-option">
                         <input id="chkAlcaldias" type="checkbox" checked>
                         <span class="layer-option-text">
                             <strong>Alcaldías</strong>
@@ -139,7 +157,7 @@
                         </span>
                     </label>
 
-                    <label class="layer-option">
+                    <label id="schoolsLayerOption" class="layer-option">
                         <input id="chkEscuelas" type="checkbox" checked>
                         <span class="layer-option-text">
                             <strong>Escuelas</strong>
@@ -167,7 +185,7 @@
                     </article>
 
                     <article class="stat-card">
-                        <span class="stat-label">AGEB con matrícula</span>
+                        <span id="unitsStatLabel" class="stat-label">AGEB con matrícula</span>
                         <strong id="totalAGEB">—</strong>
                     </article>
 
@@ -213,16 +231,17 @@
                 </div>
             </section>
 
-            <p class="method-note">
-                Las proyecciones son estimaciones técnicas. La matrícula base corresponde a la Estadística Oficial 911.
-            </p>
+            <div class="technical-note" role="note">
+                <strong><i class="fa-solid fa-circle-info" aria-hidden="true"></i> Nota técnica</strong>
+                <p>Los resultados representan escenarios estimados de cambio en la matrícula a partir de la Estadística Oficial 911. Sirven para identificar tendencias territoriales y apoyar el análisis; no constituyen cifras observadas ni sustituyen la actualización anual de los registros oficiales.</p>
+            </div>
         </aside>
 
         <section class="map-area" aria-label="Mapa de proyecciones educativas">
             <div id="map"></div>
 
             <div class="map-status">
-                <span>
+                <span id="mapStatusText">
                     <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
                     Selecciona un AGEB para consultar sus escuelas.
                 </span>
@@ -233,7 +252,7 @@
             <div class="details-header">
                 <div>
                     <span class="panel-kicker">Detalle</span>
-                    <h2>Información de la escuela</h2>
+                    <h2 id="detailsTitle">Información de la escuela</h2>
                 </div>
 
                 <button id="closePanel" class="icon-button" type="button" aria-label="Cerrar panel" title="Cerrar">
@@ -242,7 +261,7 @@
             </div>
 
             <div class="details-scroll">
-                <section class="detail-section">
+                <section id="informationSection" class="detail-section">
                     <div id="schoolInfo">
                         <div class="empty-state">
                             <i class="fa-solid fa-school-circle-check" aria-hidden="true"></i>
@@ -252,7 +271,7 @@
                     </div>
                 </section>
 
-                <section class="detail-section">
+                <section id="schoolChartSection" class="detail-section">
                     <div class="detail-section-heading">
                         <div>
                             <span class="section-eyebrow">Evolución temporal</span>
@@ -280,7 +299,7 @@
                     </div>
                 </section>
 
-                <section class="detail-section">
+                <section id="projectionSection" class="detail-section">
                     <div class="detail-section-heading">
                         <div>
                             <span class="section-eyebrow">Ciclos escolares</span>
@@ -293,7 +312,7 @@
                     </div>
                 </section>
 
-                <section class="detail-section">
+                <section id="similarSection" class="detail-section">
                     <div class="detail-section-heading">
                         <div>
                             <span class="section-eyebrow">Referencia</span>
@@ -306,7 +325,7 @@
                     </div>
                 </section>
 
-                <section class="detail-section detail-actions">
+                <section id="schoolActionsSection" class="detail-section detail-actions">
                     <button id="compareSchoolBtn" class="primary-button" type="button">
                         <i class="fa-solid fa-code-compare" aria-hidden="true"></i>
                         Agregar a comparación

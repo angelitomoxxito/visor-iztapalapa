@@ -101,3 +101,21 @@ function getCurrentYear() {
 function getCurrentYearField() {
     return getCurrentYear().field;
 }
+
+function matchesPercentageRange(value, range = SIGPE.currentPercentageRange) {
+    if (range === "all") return true;
+    if (value === null || !Number.isFinite(Number(value))) return range === "no-base";
+    const n = Number(value);
+    const rules = {
+        "lt-10": n < -10,
+        "-10--7": n >= -10 && n < -7,
+        "-7--4": n >= -7 && n < -4,
+        "-4--2": n >= -4 && n < -2,
+        "-2-2": n >= -2 && n <= 2,
+        "2-5": n > 2 && n <= 5,
+        "5-10": n > 5 && n <= 10,
+        "10-20": n > 10 && n <= 20,
+        "gt20": n > 20
+    };
+    return Boolean(rules[range]);
+}

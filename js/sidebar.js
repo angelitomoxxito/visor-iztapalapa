@@ -2,6 +2,24 @@
    PANEL DERECHO Y FICHA DE ESCUELA
    ========================================================= */
 
+function setDetailMode(mode) {
+    const schoolMode = mode === "school";
+    const alcaldiaMode = mode === "alcaldia";
+    const title = byId("detailsTitle");
+    if (title) title.textContent = schoolMode
+        ? "Información de la escuela"
+        : alcaldiaMode
+            ? "Información de la alcaldía"
+            : "Información del AGEB";
+
+    byId("schoolChartSection")?.classList.toggle("is-hidden", !schoolMode);
+    byId("projectionSection")?.classList.toggle("is-hidden", !(schoolMode || alcaldiaMode));
+    byId("similarSection")?.classList.toggle("is-hidden", !schoolMode);
+    byId("schoolActionsSection")?.classList.toggle("is-hidden", !schoolMode);
+    byId("conapoSection")?.classList.toggle("is-hidden", false);
+}
+
+
 function initializeSidebar() {
     const closeButton = firstExistingElement(
         "closePanel",
@@ -79,6 +97,8 @@ function closeSchoolDetails() {
 
 function selectSchool(school) {
     if (!school) return;
+
+    setDetailMode("school");
 
     SIGPE.selectedSchool = school;
 

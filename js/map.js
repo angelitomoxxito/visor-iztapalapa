@@ -221,7 +221,10 @@ function drawAlcaldias() {
 function getFilteredAlcaldias() {
     return SIGPE.data.alcaldias.features.filter(feature => {
         const municipality = String(feature.properties.CVE_MUN || "").padStart(3, "0");
-        return SIGPE.currentAlcaldia === "Todos" || municipality === SIGPE.currentAlcaldia;
+        const matchesAlcaldia = SIGPE.currentAlcaldia === "Todos" || municipality === SIGPE.currentAlcaldia;
+        const value = getFeatureValue(feature);
+        const matchesVariation = SIGPE.currentVariable !== "percentage" || matchesPercentageRange(value);
+        return matchesAlcaldia && matchesVariation;
     });
 }
 
@@ -318,7 +321,9 @@ function getFilteredAGEB() {
                     normalizeText(SIGPE.currentLevel)
             );
 
-        return matchesAlcaldia && matchesLevel;
+        const value = getFeatureValue(feature);
+        const matchesVariation = SIGPE.currentVariable !== "percentage" || matchesPercentageRange(value);
+        return matchesAlcaldia && matchesLevel && matchesVariation;
     });
 }
 
@@ -447,7 +452,10 @@ function getFilteredSchoolsForAGEB(cvegeo) {
             school.alcaldia === SIGPE.currentAlcaldia ||
             school.mun === SIGPE.currentAlcaldia;
 
-        return matchesLevel && matchesAlcaldia;
+        const field = getCurrentYearField();
+        const change = calculatePercentChange(numberValue(school[field]), numberValue(school.mat_2024_2025));
+        const matchesVariation = SIGPE.currentVariable !== "percentage" || matchesPercentageRange(change);
+        return matchesLevel && matchesAlcaldia && matchesVariation;
     });
 }
 
@@ -457,6 +465,7 @@ function getFilteredSchoolsForAGEB(cvegeo) {
    ========================================================= */
 
 function showAGEBInformation(feature) {
+    setDetailMode("ageb");
     const properties = feature.properties;
 
     const schools = getFilteredSchoolsForAGEB(
@@ -572,6 +581,7 @@ function showAGEBInformation(feature) {
    ========================================================= */
 
 function showAlcaldiaInformation(feature) {
+    setDetailMode("alcaldia");
     const properties = feature.properties || {};
     const mun = String(properties.CVE_MUN || "").padStart(3, "0");
     const currentYear = getCurrentYear();
@@ -596,7 +606,20 @@ function showAlcaldiaInformation(feature) {
                 <span>Cambio acumulado:</span><strong>${formatPercent(change)}</strong>
             </div>
         </section>`;
-    byId("projectionTable").innerHTML = "";
+    const projectionRows = SIGPE.years.map((year, index) => {
+        const value = schools.reduce((sum, school) => sum + numberValue(school[year.field]), 0);
+        const previous = index === 0
+            ? value
+            : schools.reduce((sum, school) => sum + numberValue(school[SIGPE.years[index - 1].field]), 0);
+        const annualChange = index === 0 ? null : calculatePercentChange(value, previous);
+        return `<tr><td>${year.label}</td><td>${formatNumber(value)}</td><td>${formatPercent(annualChange)}</td></tr>`;
+    }).join("");
+
+    byId("projectionTable").innerHTML = `
+        <table class="projection-table">
+            <thead><tr><th>Ciclo</th><th>Matrícula de la alcaldía</th><th>Cambio anual</th></tr></thead>
+            <tbody>${projectionRows}</tbody>
+        </table>`;
     byId("similarSchools").innerHTML = "";
     renderConapoComparison(mun);
     openSidebar();

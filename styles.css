@@ -42,3 +42,9 @@ button{cursor:pointer}
 
 .schoolCard{box-shadow:0 1px 4px rgba(15,76,129,.10)}
 .schoolCard strong{font-weight:750}
+
+.is-hidden{display:none!important}
+.field-help{display:block;margin-top:6px;color:var(--muted);font-size:11px;line-height:1.4}
+.technical-note{margin-top:14px;padding:12px;border:1px solid #bfdbfe;border-radius:10px;background:#eff6ff;color:#334155;font-size:11.5px;line-height:1.5}
+.technical-note strong{display:block;color:var(--blue);margin-bottom:5px}
+.technical-note p{margin:0}

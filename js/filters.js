@@ -8,6 +8,7 @@ function initializeFilters() {
     connectYearFilter();
     connectTerritoryFilter();
     connectVariableFilter();
+    connectPercentageRangeFilter();
     connectLevelFilter();
     connectAlcaldiaFilter();
     connectClearFiltersButton();
@@ -85,8 +86,11 @@ function connectTerritoryFilter() {
             : "ageb";
 
         closeSchoolDetails();
+        updateTerritoryUI();
         refreshMap();
     });
+
+    updateTerritoryUI();
 }
 
 
@@ -103,8 +107,41 @@ function connectVariableFilter() {
         SIGPE.currentVariable = event.target.value === "percentage"
             ? "percentage"
             : "total";
+        if (SIGPE.currentVariable !== "percentage") {
+            SIGPE.currentPercentageRange = "all";
+            const range = byId("percentageRangeFilter");
+            if (range) range.value = "all";
+        }
+        updateTerritoryUI();
         refreshMap();
     });
+}
+
+function connectPercentageRangeFilter() {
+    const selector = byId("percentageRangeFilter");
+    if (!selector) return;
+    selector.value = SIGPE.currentPercentageRange;
+    selector.addEventListener("change", event => {
+        SIGPE.currentPercentageRange = event.target.value || "all";
+        closeSchoolDetails();
+        refreshMap();
+    });
+}
+
+function updateTerritoryUI() {
+    const isAlcaldia = SIGPE.currentTerritory === "alcaldia";
+    byId("agebLayerOption")?.classList.toggle("is-hidden", isAlcaldia);
+    byId("schoolsLayerOption")?.classList.toggle("is-hidden", isAlcaldia);
+    byId("alcaldiaLayerOption")?.classList.toggle("is-hidden", false);
+    byId("percentageRangeGroup")?.classList.toggle("is-hidden", SIGPE.currentVariable !== "percentage");
+
+    const unitsLabel = byId("unitsStatLabel");
+    if (unitsLabel) unitsLabel.textContent = isAlcaldia ? "Alcaldías mostradas" : "AGEB con matrícula";
+
+    const status = byId("mapStatusText");
+    if (status) status.innerHTML = isAlcaldia
+        ? '<i class="fa-solid fa-circle-info" aria-hidden="true"></i> Selecciona una alcaldía para consultar su evolución y la comparación con CONAPO.'
+        : '<i class="fa-solid fa-circle-info" aria-hidden="true"></i> Selecciona un AGEB para consultar sus escuelas.';
 }
 
 
@@ -298,6 +335,7 @@ function connectClearFiltersButton() {
         SIGPE.currentAlcaldia = "Todos";
         SIGPE.currentVariable = "total";
         SIGPE.currentTerritory = "ageb";
+        SIGPE.currentPercentageRange = "all";
 
         const yearSelector = firstExistingElement(
             "yearSelect",
@@ -333,6 +371,9 @@ function connectClearFiltersButton() {
         const variableSelector = byId("variableSelect");
         if (territorySelector) territorySelector.value = "ageb";
         if (variableSelector) variableSelector.value = "total";
+        const percentageRangeSelector = byId("percentageRangeFilter");
+        if (percentageRangeSelector) percentageRangeSelector.value = "all";
+        updateTerritoryUI();
 
         const searchInput = byId("searchInput");
 
@@ -409,7 +450,13 @@ function updateDashboard() {
             String(school.mun || "").padStart(3, "0") ===
                 SIGPE.currentAlcaldia;
 
-        return matchesLevel && matchesAlcaldia;
+        const current = Number(school[currentField]) || 0;
+        const base = Number(school.mat_2024_2025) || 0;
+        const change = percent(current, base);
+        const matchesVariation = SIGPE.currentVariable !== "percentage" ||
+            matchesPercentageRange(change);
+
+        return matchesLevel && matchesAlcaldia && matchesVariation;
     });
 
     const currentEnrollment = filteredSchools.reduce(
@@ -426,9 +473,9 @@ function updateDashboard() {
 
     const totalSchools = filteredSchools.length;
 
-    const totalAGEB = getFilteredAGEB().filter(feature =>
-        getFeatureValue(feature) > 0
-    ).length;
+    const totalUnits = SIGPE.currentTerritory === "alcaldia"
+        ? getFilteredAlcaldias().length
+        : getFilteredAGEB().filter(feature => getFeatureValue(feature) > 0).length;
 
     const accumulatedChange = percent(
         currentEnrollment,
@@ -447,7 +494,7 @@ function updateDashboard() {
 
     setDashboardValue(
         ["totalAGEB", "unitsCount", "statAGEB"],
-        formatNumber(totalAGEB)
+        formatNumber(totalUnits)
     );
 
     setDashboardValue(
